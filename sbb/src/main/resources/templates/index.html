@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>홈</title>
 </head>
 <body>
-<h1>홈 페이지</h1>
-<p th:if="${#authorization.expression('isAuthenticated()')}">
-    로그인 완료! <a href="/logout">로그아웃</a>
-</p>
-<p th:if="${#authorization.expression('!isAuthenticated()')}">
-    <a href="/login">로그인</a> | <a href="/signup">회원가입</a>
-</p>
+<h1>문서 기반 문제 생성 서비스</h1>
+<p>PDF를 올리면 매일 2문제씩 만들어드려요.</p>
+<p><a th:href="@{/document/upload}">PDF 업로드</a></p>
 </body>
 </html>

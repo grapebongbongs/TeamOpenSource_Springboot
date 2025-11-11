@@ -1,9 +1,14 @@
-<th:block th:with="title='PDF 업로드', content=~{::content}" th:replace="layout :: content">
-  <div id="content">
-    <h2>PDF 업로드</h2>
-    <form th:action="@{/document/upload}" method="post" enctype="multipart/form-data">
-      <input type="file" name="pdfFile" accept="application/pdf" required />
-      <button type="submit">업로드</button>
-    </form>
-  </div>
-</th:block>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF 업로드</title>
+</head>
+<body>
+<h2>PDF 업로드</h2>
+<form th:action="@{/document/upload}" method="post" enctype="multipart/form-data">
+    <input type="file" name="pdfFile" accept="application/pdf" required />
+    <button type="submit">업로드</button>
+</form>
+</body>
+</html>
