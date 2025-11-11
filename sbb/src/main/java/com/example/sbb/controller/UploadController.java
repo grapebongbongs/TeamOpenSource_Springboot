@@ -38,7 +38,7 @@ public class UploadController {
                     throw new IOException("업로드 폴더 생성 실패");
                 }
             }
-
+            
             // 3️⃣ 파일 이름 생성
             String originalName = file.getOriginalFilename();
             String name = System.currentTimeMillis() + "_" + originalName;
@@ -52,7 +52,7 @@ public class UploadController {
             System.out.println("   - 저장 경로: " + dest.getAbsolutePath());
 
             // 5️⃣ 업로드 후 홈으로 이동
-            return "redirect:/index";
+            return "redirect:/";
 
         } catch (Exception e) {
             // 6️⃣ 에러 발생 시 서버 종료 없이 로그만 출력

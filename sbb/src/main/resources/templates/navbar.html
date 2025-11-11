@@ -1,7 +1,9 @@
-<!— SBB처럼 프래그먼트로 분리 —>
+<!-- templates/user/navbar.html -->
 <nav th:fragment="nav">
-  <a th:href="@{/}">홈</a>
-  <a th:href="@{/document/upload}">PDF 업로드</a>
-  <a th:href="@{/question/list}">문제 보기</a>
-  <button onclick="subscribePush()">알림 허용</button>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/document/upload">Upload PDF</a></li>
+    <li><a href="/questions">My Questions</a></li>
+    <li><a href="/logout">Logout</a></li>
+  </ul>
 </nav>

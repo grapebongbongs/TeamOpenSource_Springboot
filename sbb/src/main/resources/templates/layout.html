@@ -1,14 +1,14 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title th:replace="${title} ?: ~{}">SBB 기반 문제 생성 서비스</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}" />
+  <meta charset="utf-8">
+  <title>SBB 기반 문제 생성 서비스</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
   <th:block th:replace="~{navbar :: nav}"></th:block>
   <main class="container" th:fragment="content">
-    <div th:insert="${content}"></div>
+    <th:block th:replace="~{::body}"></th:block>
   </main>
   <script th:src="@{/app.js}"></script>
 </body>
