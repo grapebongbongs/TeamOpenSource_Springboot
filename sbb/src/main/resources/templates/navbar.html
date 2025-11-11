@@ -1,9 +1,24 @@
-<!-- templates/user/navbar.html -->
-<nav th:fragment="nav">
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/document/upload">Upload PDF</a></li>
-    <li><a href="/questions">My Questions</a></li>
-    <li><a href="/logout">Logout</a></li>
-  </ul>
+<!-- templates/navbar.html -->
+<nav class="navbar" th:fragment="nav">
+  <div class="navbar-inner">
+    <a class="brand" href="/">Overlatex</a>
+
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/document/upload">Upload PDF</a></li>
+      <li><a href="/questions">My Questions</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+
+    <!-- 우측 로그인/상태 -->
+    <div class="user-status">
+      <span th:if="${#authorization.expression('isAuthenticated()')}">
+        환영합니다, <strong th:text="${#authentication.name}"></strong>님!
+        <a href="/logout">로그아웃</a>
+      </span>
+      <span th:if="${#authorization.expression('!isAuthenticated()')}">
+        <a href="/login">로그인</a> | <a href="/signup">회원가입</a>
+      </span>
+    </div>
+  </div>
 </nav>

@@ -1,0 +1,50 @@
+/* 페이지 기본 */
+:root { --brand:#1abc9c; --ink:#2c3e50; --bg:#f5f7fa; }
+html,body{margin:0;padding:0}
+body{font-family:'Segoe UI',Roboto,'Noto Sans KR',sans-serif;background:var(--bg);color:#333}
+
+/* =========================
+   Navbar
+   ========================= */
+.navbar{
+  position: sticky; top:0; z-index: 100;
+  background:#2c3e50; color:#ecf0f1;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);
+}
+.navbar-inner{
+  max-width:1100px; margin:0 auto;
+  display:flex; align-items:center; gap:24px;
+  padding:12px 20px;
+}
+.brand{color:#ecf0f1; text-decoration:none; font-weight:700; letter-spacing:.3px}
+.nav-links{margin:0; padding:0; list-style:none; display:flex; gap:18px}
+.nav-links a{color:#ecf0f1; text-decoration:none; font-weight:500}
+.nav-links a:hover{color:var(--brand)}
+
+/* 우측 사용자 상태 */
+.user-status{margin-left:auto; display:flex; align-items:center; gap:10px}
+.user-status strong{color:#fff}
+.user-status a{
+  color:#ecf0f1; text-decoration:none; font-weight:600;
+  border:1px solid transparent; padding:4px 8px; border-radius:6px;
+  transition:.2s;
+}
+.user-status a:hover{background:var(--brand); border-color:var(--brand); color:#fff}
+
+/* 메인 카드 */
+main.container{
+  max-width:1100px; margin:28px auto; padding:24px;
+  background:#fff; border-radius:12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+}
+
+/* 링크 기본 */
+a{color:var(--brand)}
+a:hover{text-decoration:underline}
+
+/* 반응형 */
+@media (max-width:700px){
+  .nav-links{display:none} /* 필요하면 햄버거로 교체 가능 */
+  .user-status{gap:6px; font-size:14px}
+  main.container{margin:14px auto; padding:18px}
+}

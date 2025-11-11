@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @RequiredArgsConstructor
@@ -31,9 +32,11 @@ public class SecurityConfig {
                     .permitAll()
             )
             .logout(logout -> logout
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/")
+                    // ✅ GET 요청으로 로그아웃도 허용 (개발환경 편의)
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                    .logoutSuccessUrl("/")   // 로그아웃 후 홈으로 이동
                     .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID")
                     .permitAll()
             );
 
@@ -45,7 +48,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ 새 방식: AuthenticationManager Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
