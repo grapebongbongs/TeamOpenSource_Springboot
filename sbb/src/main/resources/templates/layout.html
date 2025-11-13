@@ -1,20 +1,28 @@
-<!doctype html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko"
-      th:fragment="content(body)">
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(body)">
+
 <head>
   <meta charset="utf-8">
-  <title>SBB 기반 문제 생성 서비스</title>
+  <title>Intuitive - PDF 기반 문제 생성 서비스</title>
+
+  <!-- 공통 스타일 -->
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-  <!-- 네비게이션바: 딱 1회만 include -->
-  <th:block th:replace="~{navbar :: nav}"></th:block>
 
+<body>
+
+  <!-- Navbar (모든 페이지 공통) -->
+  <div th:replace="navbar :: nav"></div>
+
+  <!-- 메인 컨텐츠 영역 -->
   <main class="container">
-    <!-- 자식 템플릿이 넘겨주는 본문 -->
-    <th:block th:replace="${body}"></th:block>
+      <th:block th:replace="${body}"></th:block>
   </main>
 
-  <script th:src="@{/app.js}"></script>
+  <!-- 공통 스크립트 -->
+  <script th:src="@{/js/app.js}"></script>
+
 </body>
 </html>

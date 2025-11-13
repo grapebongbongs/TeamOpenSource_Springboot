@@ -26,8 +26,8 @@ public class DailyProblemScheduler {
         for (DocumentFile doc : docs) {
             String text = doc.getExtractedText();
 
-            // 아직 텍스트 안 뽑힌 문서면 건너뜀
             if (text == null || text.isBlank()) {
+                // 아직 텍스트 미추출 문서는 건너뜀
                 continue;
             }
 
