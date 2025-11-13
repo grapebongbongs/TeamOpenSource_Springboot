@@ -35,7 +35,6 @@
             <tr>
                 <th>ID</th>
                 <th>원본 파일명</th>
-                <th>저장 파일명</th>
                 <th>파일 크기 (byte)</th>
                 <th>업로드 시각</th>
                 <th style="width:110px; text-align:center;">액션</th>
@@ -50,7 +49,6 @@
             <tr th:each="file : ${files}">
                 <td th:text="${file.id}"></td>
                 <td th:text="${file.originalFilename}"></td>
-                <td th:text="${file.storedFilename}"></td>
                 <td th:text="${file.fileSize}"></td>
                 <td th:text="${file.uploadedAt}"></td>
                 <td style="text-align:center;">

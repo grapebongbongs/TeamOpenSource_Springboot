@@ -269,4 +269,72 @@ public class GeminiQuestionService {
             return "⚠ Gemini 오류: " + e.getMessage();
         }
     }
+
+
+    // =========================
+        // 5) 여러 텍스트 → 한 번에 문제 생성
+        // =========================
+        public String generateQuestionsFromTexts(List<String> texts, List<String> names) {
+            if (texts == null || texts.isEmpty()) {
+                return "⚠ 전달된 텍스트 데이터가 없습니다.";
+        }
+
+        // 요청 URL
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/"
+                    + modelName + ":generateContent?key=" + apiKey;
+
+        // 이름 정보 (있을 때만 추가)
+        StringBuilder titleBuilder = new StringBuilder();
+        if (names != null && !names.isEmpty()) {
+                titleBuilder.append("다음 ").append(names.size()).append("개의 문서를 기반으로 문제를 만들어줘.\n");
+                for (int i = 0; i < names.size(); i++) {
+                titleBuilder.append("- ").append(names.get(i)).append("\n");
+                }
+                titleBuilder.append("\n");
+        }
+
+        // 문제 생성 지시 프롬프트
+        String prompt = """
+                너는 대학 강의자료나 교재 텍스트를 기반으로 학습용 문제를 만들어주는 도우미야.
+
+                아래 여러 개의 텍스트 내용을 모두 종합해서 아래 조건을 만족하는 문제를 만들어줘.
+
+                - 총 10문제
+                - 객관식 6문제
+                - 주관식(단답형/서술형) 4문제
+
+                각 문제는 반드시 아래 형식을 지켜줘:
+
+                [번호]. 문제 내용
+                (보기) 1) ..., 2) ..., 3) ..., 4) ...   <-- 객관식일 때만
+                [정답] 숫자 또는 텍스트
+                [해설] 한두 문장으로 간단하게 이유 설명
+
+                주관식 문제에는 (보기)를 넣지 말고, 정답과 해설만 작성해줘.
+
+                """ + titleBuilder;
+
+        // 각 텍스트를 parts로 추가
+        List<Map<String, Object>> parts = new ArrayList<>();
+        parts.add(Map.of("text", prompt));
+
+        for (String text : texts) {
+                if (text == null || text.isBlank()) continue;
+                parts.add(Map.of("text", text));
+        }
+
+        // 요청 Body 구성
+        Map<String, Object> body = Map.of(
+                "contents", List.of(
+                            Map.of(
+                                    "role", "user",
+                                    "parts", parts
+                        )
+                )
+        );
+
+        // Gemini API 호출 (기존 공용 함수 사용)
+        return callGemini(body);
+        }
+
 }
