@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>PDF 업로드</title>
+
+    <!-- 단순한 미니멀 스타일 CSS -->
+    <link rel="stylesheet" type="text/css" href="/css/uploadstyle.css">
+
 </head>
 <body>
+
 <h2>PDF 업로드</h2>
+
 <form th:action="@{/document/upload}" method="post" enctype="multipart/form-data">
     <input type="file" name="pdfFile" accept="application/pdf" required />
-    <button type="submit">업로드</button>
+    <button type="submit" class="upload-btn">업로드</button>
 </form>
+
+<!-- 목록 보기 버튼 -->
+<a th:href="@{/document/list}" class="list-btn">📄 목록 보기</a>
+
 </body>
 </html>

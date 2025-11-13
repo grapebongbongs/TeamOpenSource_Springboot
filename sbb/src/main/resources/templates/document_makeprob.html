@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 만들기</title>
+</head>
+<body>
+
+<h1 th:text="${message}">문제 만들기 페이지</h1>
+
+<div th:if="${error}" style="color:red;">
+    <p th:text="${error}"></p>
+</div>
+
+<form th:action="@{/document/makeprob}"
+      th:object="${document}" method="post">
+
+    <p>
+        원본 파일명: <input type="text" th:field="*{originalName}">
+    </p>
+
+    <p>
+        추출된 텍스트:<br>
+        <textarea th:field="*{extracted}" rows="15" cols="90"></textarea>
+    </p>
+
+    <button type="submit">문제 생성</button>
+</form>
+
+</body>
+</html>

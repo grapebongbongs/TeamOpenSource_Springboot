@@ -2,108 +2,33 @@ package com.example.sbb.domain.document;
 
 import com.example.sbb.domain.user.SiteUser;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "document_file")
+@Getter
+@Setter
+@NoArgsConstructor
 public class DocumentFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 업로드된 원본 파일명
-    @Column(nullable = false)
     private String originalFilename;
-
-    // 서버에 저장된 파일명 (ex: 1731400000000_문서.pdf)
-    @Column(nullable = false)
     private String storedFilename;
-
-    // 파일이 저장된 경로 (상대경로 또는 절대경로)
-    @Column(nullable = false)
     private String filePath;
-
-    // 파일 크기 (byte)
-    @Column(nullable = false)
     private Long fileSize;
 
-    // 업로드 시간
-    @Column(nullable = false)
-    private LocalDateTime uploadedAt = LocalDateTime.now();
+    private LocalDateTime uploadedAt;
 
-    // 🔗 업로드한 사용자 (외래키)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne
     private SiteUser user;
 
-    public DocumentFile() {
-    }
-
-    public DocumentFile(String originalFilename,
-                        String storedFilename,
-                        String filePath,
-                        Long fileSize,
-                        SiteUser user) {
-        this.originalFilename = originalFilename;
-        this.storedFilename = storedFilename;
-        this.filePath = filePath;
-        this.fileSize = fileSize;
-        this.user = user;
-        this.uploadedAt = LocalDateTime.now();
-    }
-
-    // ====== getter / setter ======
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getOriginalFilename() {
-        return originalFilename;
-    }
-
-    public void setOriginalFilename(String originalFilename) {
-        this.originalFilename = originalFilename;
-    }
-
-    public String getStoredFilename() {
-        return storedFilename;
-    }
-
-    public void setStoredFilename(String storedFilename) {
-        this.storedFilename = storedFilename;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public LocalDateTime getUploadedAt() {
-        return uploadedAt;
-    }
-
-    public void setUploadedAt(LocalDateTime uploadedAt) {
-        this.uploadedAt = uploadedAt;
-    }
-
-    public SiteUser getUser() {
-        return user;
-    }
-
-    public void setUser(SiteUser user) {
-        this.user = user;
-    }
+    // ✅ PDF에서 뽑은 텍스트를 넣어 둘 컬럼
+    @Column(columnDefinition = "LONGTEXT")
+    private String extractedText;
 }

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>문제 생성 결과</title>
+</head>
+<body>
+
+<h2 th:text="'[' + ${originalName} + '] 기반 문제'"></h2>
+
+<pre th:text="${questions}"></pre>
+
+<a href="/document/makeprob">다시 만들기</a>
+
+</body>
+</html>
