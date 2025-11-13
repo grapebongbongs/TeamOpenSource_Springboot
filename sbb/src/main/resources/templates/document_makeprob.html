@@ -1,31 +1,55 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>문제 만들기</title>
-</head>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: layout (~{::body})"
+      th:with="content='this :: content'">
+
 <body>
+<div th:fragment="content">
 
-<h1 th:text="${message}">문제 만들기 페이지</h1>
+    <h1 class="page-title">문제 생성</h1>
+    <p style="margin-top:-6px; margin-bottom:18px; font-size:14px; color:#6b7280;">
+        문제를 생성할 PDF 파일을 업로드하세요.  
+        Gemini 파일 기반 API로 자동 분석하여 문제를 생성합니다.
+    </p>
 
-<div th:if="${error}" style="color:red;">
-    <p th:text="${error}"></p>
+    <!-- 에러 표시 -->
+    <div th:if="${error}" class="card" style="border-left:4px solid #e74c3c; background:#fff5f5;">
+        <p style="margin:0; color:#e74c3c; font-size:14px;" th:text="${error}"></p>
+    </div>
+
+    <div class="card">
+        <form method="post"
+              th:action="@{/document/makeprob}"
+              enctype="multipart/form-data">
+
+            <!-- CSRF 토큰 -->
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+
+            <div style="margin-bottom:14px;">
+                <label for="pdfFile"
+                       style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">
+                    문제 생성용 PDF 파일 선택
+                </label>
+                <input id="pdfFile"
+                       type="file"
+                       name="pdfFile"
+                       accept="application/pdf"
+                       required>
+            </div>
+
+            <button type="submit" class="btn" style="width:100%;">
+                📝 문제 생성하기
+            </button>
+        </form>
+    </div>
+
+    <div style="margin-top:10px;">
+        <a href="/document/list" class="btn btn-outline">← 내 PDF 목록</a>
+    </div>
+
 </div>
-
-<form th:action="@{/document/makeprob}"
-      th:object="${document}" method="post">
-
-    <p>
-        원본 파일명: <input type="text" th:field="*{originalName}">
-    </p>
-
-    <p>
-        추출된 텍스트:<br>
-        <textarea th:field="*{extracted}" rows="15" cols="90"></textarea>
-    </p>
-
-    <button type="submit">문제 생성</button>
-</form>
-
 </body>
 </html>
