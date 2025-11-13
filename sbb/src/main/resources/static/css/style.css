@@ -1,6 +1,6 @@
-/* =========================
+/* =========================================================
    기본 세팅 & 컬러 토큰
-   ========================= */
+   ========================================================= */
 :root {
   --brand:        #1abc9c;
   --brand-dark:   #16a085;
@@ -14,8 +14,7 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
   margin: 0;
   padding: 0;
 }
@@ -27,25 +26,26 @@ body {
   line-height: 1.5;
 }
 
-/* 공통 링크 스타일 */
+/* 공통 링크 */
 a {
   color: var(--brand);
   text-decoration: none;
-  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  transition: 0.15s ease;
 }
 
 a:hover {
   text-decoration: underline;
 }
 
-/* =========================
+
+/* =========================================================
    Navbar
-   ========================= */
+   ========================================================= */
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 100;
   width: 100%;
+  z-index: 100;
   background: var(--ink);
   color: #ecf0f1;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .18);
@@ -54,19 +54,17 @@ a:hover {
 .navbar-inner {
   max-width: 1100px;
   margin: 0 auto;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 10px 18px;
-  flex-wrap: wrap; /* 화면 줄어들면 자연스럽게 줄바꿈 */
+  flex-wrap: wrap;
 }
 
-/* 브랜드 로고 */
+/* 로고 */
 .navbar .brand {
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: .03em;
-  text-decoration: none;
   color: #ecf0f1;
   display: inline-flex;
   align-items: center;
@@ -77,47 +75,31 @@ a:hover {
   color: var(--brand);
 }
 
-/* 공통 링크 리셋 */
-.navbar a {
-  text-decoration: none;
-}
-
-/* 메뉴 링크 */
+/* 메뉴 */
 .nav-links {
   margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
-  align-items: center;
   gap: 14px;
 }
 
-.nav-links li {
-  margin: 0;
-  padding: 0;
-}
-
 .nav-links a {
-  position: relative;
+  padding: 6px 10px;
   font-size: 14px;
   color: #ecf0f1;
-  padding: 6px 10px;
   border-radius: 999px;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    transform 0.08s ease,
-    box-shadow 0.18s ease;
+  transition: 0.18s ease;
 }
 
 .nav-links a:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .25);
 }
 
-/* 우측 사용자 상태 */
+/* 로그인/유저 박스 */
 .user-status {
   margin-left: auto;
   display: flex;
@@ -127,105 +109,92 @@ a:hover {
   color: var(--muted);
 }
 
-.user-status strong {
-  color: #ffffff;
-}
-
 .user-status a {
-  font-size: 12px;
   color: #ecf0f1;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid transparent;
   font-weight: 600;
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.08s ease;
+  font-size: 12px;
+  transition: 0.18s ease;
 }
 
 .user-status a:hover {
-  background-color: var(--brand);
+  background: var(--brand);
   border-color: var(--brand);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
-/* =========================
-   레이아웃 / 카드 / 버튼
-   ========================= */
 
-/* 페이지 폭 */
+/* =========================================================
+   Layout & Card
+   ========================================================= */
 .container {
   max-width: 1100px;
   margin: 28px auto;
   padding: 0 20px;
 }
 
-/* 메인 컨텐츠를 카드 느낌으로 */
 main.container {
+  background: #fff;
   padding: 24px 20px;
-  background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
 }
 
-/* 섹션 카드 공통 */
 .card {
-  background: #ffffff;
+  background: #fff;
   border-radius: 10px;
   border: 1px solid var(--border-soft);
   padding: 18px 20px;
   margin-bottom: 18px;
 }
 
-/* 타이틀 */
 .page-title {
   font-size: 22px;
   font-weight: 600;
-  margin: 0 0 14px;
+  margin-bottom: 14px;
 }
 
-/* 기본 버튼 */
+
+/* =========================================================
+   Button
+   ========================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
   border-radius: 999px;
-  border: none;
   background: var(--brand);
-  color: #ffffff;
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
+  border: none;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.08s ease,
-              box-shadow 0.15s ease;
+  transition: 0.15s ease;
 }
 
 .btn:hover {
   background: var(--brand-dark);
-  box-shadow: 0 6px 14px rgba(26, 188, 156, 0.35);
+  box-shadow: 0 6px 14px rgba(26, 188, 156, .35);
   transform: translateY(-1px);
 }
 
-/* 서브 버튼(회색톤) */
 .btn-outline {
-  background: #ffffff;
+  background: #fff;
   color: var(--ink);
   border: 1px solid var(--border-soft);
-  box-shadow: none;
 }
 
 .btn-outline:hover {
   background: #ecf0f1;
 }
 
-/* =========================
-   폼 / 테이블 공통
-   ========================= */
 
+/* =========================================================
+   Forms
+   ========================================================= */
 input[type="text"],
 input[type="password"],
 input[type="file"],
@@ -235,9 +204,9 @@ select {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--border-soft);
+  margin-top: 6px;
+  margin-bottom: 14px;
   font-size: 14px;
-  margin: 6px 0 14px;
-  background: #ffffff;
 }
 
 input:focus,
@@ -245,10 +214,13 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--brand);
-  box-shadow: 0 0 0 1px rgba(26, 188, 156, 0.25);
+  box-shadow: 0 0 0 1px rgba(26, 188, 156, 0.35);
 }
 
-/* 테이블 */
+
+/* =========================================================
+   Table
+   ========================================================= */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -263,13 +235,59 @@ select:focus {
 
 .table th {
   background: #ecf0f1;
-  text-align: left;
   font-weight: 600;
 }
 
-/* =========================
+
+/* =========================================================
+   Footer
+   ========================================================= */
+.site-footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
+  background: #f9fafb;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footer-title {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.footer-link {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  color: var(--ink);
+}
+
+.footer-link:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(26, 188, 156, .25);
+}
+
+
+/* =========================================================
    반응형
-   ========================= */
+   ========================================================= */
 @media (max-width: 768px) {
   .navbar-inner {
     padding: 10px 14px;
@@ -280,32 +298,17 @@ select:focus {
     font-size: 18px;
   }
 
-  /* user-status, nav-links를 아래로 자연스럽게 배치 */
   .user-status {
     order: 2;
     width: 100%;
     justify-content: flex-end;
-    font-size: 12px;
-    gap: 6px;
   }
 
   .nav-links {
     order: 3;
     width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
     gap: 8px;
-    margin-top: 4px;
-  }
-
-  .nav-links a {
-    font-size: 13px;
-    padding: 5px 9px;
-  }
-
-  .container {
-    margin: 16px auto;
-    padding: 0 14px;
+    flex-wrap: wrap;
   }
 
   main.container {

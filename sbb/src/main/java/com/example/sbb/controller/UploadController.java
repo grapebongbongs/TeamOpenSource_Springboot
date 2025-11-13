@@ -1,20 +1,23 @@
 package com.example.sbb.controller;
 
 import com.example.sbb.domain.document.DocumentFile;
+import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
 import com.example.sbb.repository.DocumentFileRepository;
 import com.example.sbb.service.GeminiQuestionService;
+import com.example.sbb.service.QuizService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,16 +28,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadController {
 
-    // 업로드 경로
     private static final String DIR =
             System.getProperty("user.dir") + File.separator + "uploads";
 
     private final DocumentFileRepository documentFileRepository;
     private final UserService userService;
     private final GeminiQuestionService geminiQuestionService;
+    private final QuizService quizService;
 
     // ===========================
-    // 업로드 FORM
+    // 업로드 폼
     // ===========================
     @GetMapping("/upload")
     public String form() {
@@ -50,10 +53,8 @@ public class UploadController {
 
         try {
             if (principal == null) return "redirect:/login";
-
             if (file == null || file.isEmpty()) return "redirect:/document/upload";
 
-            // 업로드 폴더 생성
             File dir = new File(DIR);
             if (!dir.exists()) dir.mkdirs();
 
@@ -63,7 +64,6 @@ public class UploadController {
             File dest = new File(dir, storedName);
             file.transferTo(dest);
 
-            // DB 저장
             SiteUser user = userService.getUser(principal.getName());
             String relativePath = "uploads" + File.separator + storedName;
 
@@ -83,11 +83,10 @@ public class UploadController {
     }
 
     // ===========================
-    // PDF 목록 보기
+    // 내 PDF 목록
     // ===========================
     @GetMapping("/list")
     public String list(Model model, Principal principal) {
-
         if (principal == null) return "redirect:/login";
 
         SiteUser user = userService.getUser(principal.getName());
@@ -108,16 +107,13 @@ public class UploadController {
         if (principal == null) return "redirect:/login";
 
         DocumentFile file = documentFileRepository.findById(id).orElse(null);
-
         if (file == null) {
             rttr.addFlashAttribute("error", "삭제할 파일이 없습니다.");
             return "redirect:/document/list";
         }
 
-        // 실제 파일 삭제
         try {
             Path path = Paths.get(System.getProperty("user.dir"), "uploads", file.getStoredFilename());
-
             if (Files.exists(path)) {
                 Files.delete(path);
             }
@@ -126,16 +122,13 @@ public class UploadController {
             return "redirect:/document/list";
         }
 
-        // DB 삭제
         documentFileRepository.delete(file);
-
         rttr.addFlashAttribute("message", "🗑 삭제되었습니다.");
         return "redirect:/document/list";
     }
 
-
     // ===========================
-    // 📌 리스트에 있는 PDF 전부를 이용하여 즉시 문제 생성
+    // 🔥 리스트에 있는 모든 PDF 기반으로 문제 생성
     // ===========================
     @GetMapping("/makeprob")
     public String makeProblemFromList(Principal principal, Model model) {
@@ -147,6 +140,7 @@ public class UploadController {
 
         if (files.isEmpty()) {
             model.addAttribute("error", "PDF가 존재하지 않습니다. 먼저 업로드해 주세요.");
+            model.addAttribute("files", files);
             return "document_list";
         }
 
@@ -163,15 +157,22 @@ public class UploadController {
             }
         } catch (Exception e) {
             model.addAttribute("error", "PDF 읽기 오류: " + e.getMessage());
+            model.addAttribute("files", files);
             return "document_list";
         }
 
-        // Gemini 문제 생성
-        String questions =
+        // 1) Gemini에게 여러 PDF를 보내서 "문제 텍스트" 생성
+        String rawQuestions =
                 geminiQuestionService.generateQuestionsFromMultiplePdfs(pdfBytesList, names);
 
+        // 2) 그 텍스트를 파싱해서 QuizQuestion 엔티티로 저장
+        List<QuizQuestion> savedQuestions =
+                quizService.saveFromRawText(rawQuestions, user, files);
+
+        // 3) 결과 화면으로 전달
         model.addAttribute("originalName", "총 " + names.size() + "개 문서");
-        model.addAttribute("questions", questions);
+        model.addAttribute("questionsRaw", rawQuestions);
+        model.addAttribute("savedCount", savedQuestions.size());
 
         return "document_makeprob_result";
     }

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko"
+      th:replace="layout :: layout(~{::body})">
+<body>
+<div>
+
+    <h1 class="page-title">내 퀴즈 관리</h1>
+
+    <!-- 아직 안 푼 문제 -->
+    <div class="card">
+        <h2 style="font-size:16px; margin-top:0;">🕒 아직 안 푼 문제</h2>
+        <div th:if="${#lists.isEmpty(pendingQuestions)}"
+             style="font-size:14px; color:#6b7280;">
+            아직 풀지 않은 문제가 없습니다. PDF를 업로드하고 문제를 생성해보세요.
+        </div>
+        <ul th:if="${!#lists.isEmpty(pendingQuestions)}"
+            style="padding-left:16px; margin-top:8px;">
+            <li th:each="q : ${pendingQuestions}"
+                style="margin-bottom:6px; font-size:14px;">
+                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
+                <a th:href="@{'/quiz/solve/' + ${q.id}}"
+                   class="btn btn-outline"
+                   style="margin-left:8px; padding:3px 8px; font-size:12px;">
+                    풀기
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 틀린 문제 -->
+    <div class="card">
+        <h2 style="font-size:16px; margin-top:0;">❌ 틀린 문제 (오답노트)</h2>
+        <div th:if="${#lists.isEmpty(wrongQuestions)}"
+             style="font-size:14px; color:#6b7280;">
+            틀린 문제가 없습니다.
+        </div>
+        <ul th:if="${!#lists.isEmpty(wrongQuestions)}"
+            style="padding-left:16px; margin-top:8px;">
+            <li th:each="q : ${wrongQuestions}"
+                style="margin-bottom:6px; font-size:14px;">
+                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
+                <a th:href="@{'/quiz/solve/' + ${q.id}}"
+                   class="btn btn-outline"
+                   style="margin-left:8px; padding:3px 8px; font-size:12px;">
+                    다시 풀기
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 맞은 문제 -->
+    <div class="card">
+        <h2 style="font-size:16px; margin-top:0;">✅ 맞은 문제</h2>
+        <div th:if="${#lists.isEmpty(correctQuestions)}"
+             style="font-size:14px; color:#6b7280;">
+            아직 맞은 문제가 없습니다. 차근차근 풀어가요.
+        </div>
+        <ul th:if="${!#lists.isEmpty(correctQuestions)}"
+            style="padding-left:16px; margin-top:8px;">
+            <li th:each="q : ${correctQuestions}"
+                style="margin-bottom:6px; font-size:14px;">
+                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
+            </li>
+        </ul>
+    </div>
+
+</div>
+</body>
+</html>
