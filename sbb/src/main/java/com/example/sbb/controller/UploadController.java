@@ -1,10 +1,12 @@
 package com.example.sbb.controller;
 
-import com.example.sbb.domain.document.DocumentFile;
+import com.example.sbb.domain.document.DocumentText;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
-import com.example.sbb.repository.DocumentFileRepository;
+import com.example.sbb.repository.DocumentTextRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,102 +19,95 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
-@RequestMapping("/document")
 @RequiredArgsConstructor
+@RequestMapping("/document")
 public class UploadController {
 
-    // ✅ 프로젝트 루트 기준 uploads 폴더 (TeamOpenSource_Springboot/sbb/uploads)
-    private static final String DIR =
-            System.getProperty("user.dir") + File.separator + "uploads";
-
-    private final DocumentFileRepository documentFileRepository;
     private final UserService userService;
+    private final DocumentTextRepository documentTextRepository;
 
     // ===========================
     // 업로드 폼
     // ===========================
     @GetMapping("/upload")
-    public String form() {
+    public String uploadForm() {
         return "document_upload"; // templates/document_upload.html
     }
 
     // ===========================
-    // PDF 업로드 처리 + DB 저장
+    // PDF 업로드 + 텍스트 추출 + DB 저장
     // ===========================
     @PostMapping("/upload")
-    public String upload(@RequestParam("pdfFile") MultipartFile file,
-                         Principal principal) {
-
+    public String upload(@RequestParam("pdfFile") MultipartFile file, Principal principal) {
         try {
-            // 0) 로그인 체크
             if (principal == null) {
-                System.out.println("❌ 로그인 안 된 상태에서 업로드 요청");
+                System.out.println("❌ 로그인되지 않음");
                 return "redirect:/user/login";
             }
 
-            // 1) 파일 체크
-            if (file == null || file.isEmpty()) {
-                System.out.println("❌ 업로드된 파일이 없습니다.");
+            if (file.isEmpty()) {
+                System.out.println("❌ 파일이 비어 있음");
                 return "redirect:/document/upload";
             }
 
-            // 2) 업로드 폴더 준비
-            File dir = new File(DIR);
-            if (!dir.exists() && !dir.mkdirs()) {
-                throw new IOException("업로드 폴더 생성 실패: " + dir.getAbsolutePath());
-            }
+            // 1️⃣ PDF 임시 저장
+            File tempPdf = File.createTempFile("upload_", ".pdf");
+            file.transferTo(tempPdf);
 
-            // 3) 파일 이름 및 경로 설정
-            String originalName = file.getOriginalFilename();
-            String storedName = System.currentTimeMillis() + "_" + originalName;
-            File dest = new File(dir, storedName);
+            // 2️⃣ PDFBox로 텍스트 추출
+            String extractedText = extractTextFromPdf(tempPdf);
 
-            // 4) 실제 파일 저장
-            file.transferTo(dest);
-
-            System.out.println("✅ 파일 업로드 완료");
-            System.out.println("   - 원본 이름: " + originalName);
-            System.out.println("   - 저장 경로: " + dest.getAbsolutePath());
-
-            // 5) 로그인 유저 조회
+            // 3️⃣ 로그인 사용자
             SiteUser user = userService.getUser(principal.getName());
 
-            // 6) DB에 메타데이터 저장
-            String relativePath = "uploads" + File.separator + storedName;
-
-            DocumentFile doc = new DocumentFile();
-            doc.setOriginalFilename(originalName);
-            doc.setStoredFilename(storedName);
-            doc.setFilePath(relativePath);          // 또는 dest.getAbsolutePath()
-            doc.setFileSize(file.getSize());
+            // 4️⃣ DB에 저장
+            DocumentText doc = new DocumentText();
+            doc.setOriginalFilename(file.getOriginalFilename());
             doc.setUploadedAt(LocalDateTime.now());
             doc.setUser(user);
+            doc.setContentText(extractedText);
 
-            documentFileRepository.save(doc);
+            DocumentText saved = documentTextRepository.save(doc);
 
-            // 7) 업로드 후 목록으로 이동
+            System.out.println("✅ 저장 완료 → id=" + saved.getId()
+                    + ", 파일명=" + file.getOriginalFilename()
+                    + ", 텍스트 길이=" + (extractedText == null ? 0 : extractedText.length()));
+
+            tempPdf.delete(); // 임시 파일 삭제
             return "redirect:/document/list";
 
         } catch (Exception e) {
-            System.out.println("❌ 업로드 중 에러: " + e.getMessage());
             e.printStackTrace();
+            System.out.println("❌ 업로드/저장 실패: " + e.getMessage());
             return "redirect:/document/upload";
         }
     }
 
     // ===========================
-    // 내 PDF 목록 보기
+    // 업로드된 PDF 목록 보기
     // ===========================
     @GetMapping("/list")
     public String list(Model model, Principal principal) {
-        if (principal == null) {
-            return "redirect:/user/login";
-        }
+        if (principal == null) return "redirect:/user/login";
 
         SiteUser user = userService.getUser(principal.getName());
-        List<DocumentFile> files = documentFileRepository.findByUser(user);
+        List<DocumentText> docs = documentTextRepository.findByUser(user);
 
-        model.addAttribute("files", files);
-        return "document_list"; // templates/document_list.html
+        model.addAttribute("docs", docs);
+        return "document_list";
     }
+
+    // ===========================
+    // PDF 텍스트 추출 함수 (PDFBox)
+    // ===========================
+    private String extractTextFromPdf(File pdfFile) {
+        try (PDDocument document = PDDocument.load(pdfFile)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            return stripper.getText(document).trim();
+        } catch (IOException e) {
+            System.out.println("⚠ PDF 텍스트 추출 실패: " + e.getMessage());
+            return "";
+        }
+    }
+    
 }
