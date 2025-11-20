@@ -7,44 +7,54 @@
     <h1 class="page-title">풀이 결과</h1>
 
     <div class="card" th:if="${question != null}">
-        <p style="font-size:16px; font-weight:500;"
-           th:text="${question.questionText}">문제 내용</p>
-
-        <div th:if="${question.multipleChoice && question.choices != null}"
-             style="margin-top:8px; font-size:14px;">
-            <strong>(보기)</strong>
-            <p th:text="${question.choices}"></p>
+        <div class="question-header-banner">
+            <div class="question-number-box"
+                 th:classappend="${correct} ? ' success' : ' danger'">
+                <span th:text="'문제 ' + ${question.numberTag}">문제 1</span>
+            </div>
+            <span th:if="${correct}" class="question-tag success">정답! 🎉</span>
+            <span th:if="${!correct}" class="question-tag danger">틀렸어요</span>
         </div>
 
-        <hr style="margin:12px 0; border:none; border-top:1px solid #e5e7eb;">
+        <p style="font-size:17px; font-weight:600; margin-top:12px; white-space:pre-wrap;"
+           th:text="${question.questionText}">문제 내용</p>
 
-        <p style="font-size:14px;">
-            <strong>나의 답:</strong>
-            <span th:text="${userAnswer}"></span>
-        </p>
+        <div class="result-message success" th:if="${correct}">
+            멋져요! 정확하게 맞췄어요. 다음 문제도 화이팅!
+        </div>
+        <div class="result-message danger" th:if="${!correct}">
+            아쉬워요. 아래에서 정답을 확인하고 다시 도전해보세요.
+        </div>
 
-        <p style="font-size:14px;"
-           th:if="${correct}">
-            <strong style="color:#16a34a;">정답입니다! 🎉</strong>
-        </p>
-        <p style="font-size:14px;"
-           th:if="${!correct}">
-            <strong style="color:#dc2626;">틀렸습니다.</strong>
-        </p>
+        <div th:if="${choiceList != null && !#lists.isEmpty(choiceList)}"
+             class="choice-display">
+            <div class="choice-display-row"
+                 th:each="choice : ${choiceList}"
+                 th:classappend="${choice.normalizedValue == normalizedCorrectAnswer} ? ' correct' : (choice.normalizedValue == normalizedUserAnswer ? ' wrong' : '')">
+                <span class="choice-index"
+                      th:text="${choice.number != null ? choice.number + '.' : ''}"></span>
+                <span class="choice-text"
+                      th:text="${choice.text}"></span>
+            </div>
+        </div>
 
-        <p style="font-size:14px; margin-top:8px;">
-            <strong>정답:</strong>
-            <span th:text="${question.answer}"></span>
-        </p>
-
-        <p style="font-size:13px; color:#6b7280; margin-top:6px;">
+        <p style="font-size:13px; color:#6b7280; margin-top:12px; white-space:pre-wrap;">
             <strong>해설:</strong>
             <span th:text="${question.explanation}"></span>
         </p>
     </div>
 
-    <div style="margin-top:10px;">
-        <a href="/quiz/list" class="btn btn-outline">← 퀴즈 목록으로</a>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <a href="/quiz/list" class="btn btn-outline">문제 목록 보기</a>
+        <a th:if="${nextQuestionId != null}"
+           th:href="@{'/quiz/solve/' + ${nextQuestionId}}"
+           class="btn">
+            다음 문제 풀기 →
+        </a>
+        <span th:if="${nextQuestionId == null}"
+              class="pill pill-muted">
+            모든 문제를 풀었습니다!
+        </span>
     </div>
 
 </div>

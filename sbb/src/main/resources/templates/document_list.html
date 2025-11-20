@@ -9,6 +9,29 @@
 
     <h1 class="page-title">내가 업로드한 PDF 목록</h1>
 
+    <div th:if="${error}" class="alert alert-danger" style="margin-bottom:12px;">
+        <span th:text="${error}"></span>
+    </div>
+    <div th:if="${message}" class="alert alert-success" style="margin-bottom:12px;">
+        <span th:text="${message}"></span>
+    </div>
+    <div th:if="${errorFileId}" class="alert alert-warning" style="margin-bottom:12px;">
+        <div style="margin-bottom:8px;">
+            <strong>PDF 읽기 오류</strong>가 발생한 파일:
+            <span th:text="${errorFileName}" style="font-weight:600;"></span>
+        </div>
+        <form th:action="@{/document/force-delete/{id}(id=${errorFileId})}"
+              method="post"
+              onsubmit="return confirm('문제와 PDF를 모두 삭제할까요?');">
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+            <button type="submit" class="btn btn-outline" style="padding:4px 10px; font-size:12px;">
+                ⚠ 문제와 함께 강제 삭제
+            </button>
+        </form>
+    </div>
+
     <!-- 상단 액션 영역 -->
     <div class="card" style="margin-bottom: 16px;">
         <div style="
@@ -77,10 +100,19 @@
     </div>
 
     <!-- 하단 액션 -->
-    <div style="display:flex; justify-content:flex-end; margin-top: 10px;">
-        <a th:href="@{/document/makeprob}" class="btn btn-outline">
-            📝 문제 만들기
-        </a>
+    <div style="margin-top: 10px;">
+        <form th:action="@{/document/makeprob}"
+              method="get"
+              style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <input type="text"
+                   name="stylePrompt"
+                   style="flex:1; min-width:260px; padding:8px 12px; border:1px solid #ccc; border-radius:6px; color:#333;"
+                   placeholder="원하는 스타일로 문제를 제작해봐요"
+                   th:value="${stylePrompt}">
+            <button type="submit" class="btn btn-outline">
+                📝 문제 만들기
+            </button>
+        </form>
     </div>
 
 </div>

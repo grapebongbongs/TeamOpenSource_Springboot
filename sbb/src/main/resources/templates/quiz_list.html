@@ -4,64 +4,63 @@
 <body>
 <div>
 
-    <h1 class="page-title">내 퀴즈 관리</h1>
+    <h1 class="page-title">문제 목록</h1>
 
-    <!-- 아직 안 푼 문제 -->
-    <div class="card">
-        <h2 style="font-size:16px; margin-top:0;">🕒 아직 안 푼 문제</h2>
-        <div th:if="${#lists.isEmpty(pendingQuestions)}"
-             style="font-size:14px; color:#6b7280;">
-            아직 풀지 않은 문제가 없습니다. PDF를 업로드하고 문제를 생성해보세요.
-        </div>
-        <ul th:if="${!#lists.isEmpty(pendingQuestions)}"
-            style="padding-left:16px; margin-top:8px;">
-            <li th:each="q : ${pendingQuestions}"
-                style="margin-bottom:6px; font-size:14px;">
-                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
-                <a th:href="@{'/quiz/solve/' + ${q.id}}"
-                   class="btn btn-outline"
-                   style="margin-left:8px; padding:3px 8px; font-size:12px;">
-                    풀기
-                </a>
-            </li>
-        </ul>
+    <div th:if="${message}" class="alert alert-success" style="margin-bottom:14px;">
+        <span th:text="${message}"></span>
     </div>
 
-    <!-- 틀린 문제 -->
-    <div class="card">
-        <h2 style="font-size:16px; margin-top:0;">❌ 틀린 문제 (오답노트)</h2>
-        <div th:if="${#lists.isEmpty(wrongQuestions)}"
-             style="font-size:14px; color:#6b7280;">
-            틀린 문제가 없습니다.
+    <div class="card question-list-card">
+        <div class="section-header">
+            <h2>전체 문제</h2>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:13px; color:#6b7280;"
+                      th:text="'총 ' + ${totalElements} + '개'">총 0개</span>
+                <a href="/quiz/next" class="btn btn-outline" style="font-size:13px;">다음 문제 풀기</a>
+            </div>
         </div>
-        <ul th:if="${!#lists.isEmpty(wrongQuestions)}"
-            style="padding-left:16px; margin-top:8px;">
-            <li th:each="q : ${wrongQuestions}"
-                style="margin-bottom:6px; font-size:14px;">
-                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
-                <a th:href="@{'/quiz/solve/' + ${q.id}}"
-                   class="btn btn-outline"
-                   style="margin-left:8px; padding:3px 8px; font-size:12px;">
-                    다시 풀기
-                </a>
-            </li>
-        </ul>
-    </div>
 
-    <!-- 맞은 문제 -->
-    <div class="card">
-        <h2 style="font-size:16px; margin-top:0;">✅ 맞은 문제</h2>
-        <div th:if="${#lists.isEmpty(correctQuestions)}"
-             style="font-size:14px; color:#6b7280;">
-            아직 맞은 문제가 없습니다. 차근차근 풀어가요.
+        <div th:if="${#lists.isEmpty(questions)}" class="empty-text">
+            아직 생성된 문제가 없습니다. PDF를 업로드하고 문제를 만들어 보세요.
         </div>
-        <ul th:if="${!#lists.isEmpty(correctQuestions)}"
-            style="padding-left:16px; margin-top:8px;">
-            <li th:each="q : ${correctQuestions}"
-                style="margin-bottom:6px; font-size:14px;">
-                <span th:text="'[' + ${q.numberTag} + '] ' + ${q.questionText}"></span>
-            </li>
-        </ul>
+
+        <div th:if="${!#lists.isEmpty(questions)}" class="question-stack">
+            <div class="question-card"
+                 th:each="q : ${questions}"
+                 th:classappend="${!q.solved} ? ' pending' : (q.correct != null && q.correct ? ' correct' : ' wrong')">
+                <div class="question-card__header">
+                    <span class="badge"
+                          th:classappend="${!q.solved} ? ' badge-pending' : (q.correct != null && q.correct ? ' badge-correct' : ' badge-wrong')"
+                          th:text="${!q.solved} ? '대기' : (q.correct != null && q.correct ? '정답' : '오답')">대기</span>
+                    <span class="question-number"
+                          th:text="'문제 ' + ${q.numberTag}">문제</span>
+                    <span style="margin-left:auto; font-size:12px; color:#9ca3af;"
+                          th:text="${q.createdAtFormatted}">날짜</span>
+                </div>
+                <p class="question-card__text"
+                   th:text="${q.questionText}"></p>
+                <div class="question-card__actions">
+                    <a th:href="@{'/quiz/solve/' + ${q.id}}"
+                       th:text="${!q.solved} ? '풀기' : (q.correct != null && q.correct ? '다시 보기' : '다시 풀기')"
+                       class="btn"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a class="page-button"
+               th:classappend="${hasPrevious} ? '' : ' disabled'"
+               th:href="${hasPrevious} ? @{/quiz/list(page=${currentPage - 1})} : '#'}">
+                ← 이전
+            </a>
+            <span class="page-info"
+                  th:text="'페이지 ' + (${currentPage} + 1) + ' / ' + ${totalPages}">페이지</span>
+            <a class="page-button"
+               th:classappend="${hasNext} ? '' : ' disabled'"
+               th:href="${hasNext} ? @{/quiz/list(page=${currentPage + 1})} : '#'}">
+                다음 →
+            </a>
+        </div>
     </div>
 
 </div>

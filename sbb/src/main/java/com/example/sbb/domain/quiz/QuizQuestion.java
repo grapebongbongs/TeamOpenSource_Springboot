@@ -5,6 +5,7 @@ import com.example.sbb.domain.user.SiteUser;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 public class QuizQuestion {
@@ -130,5 +131,14 @@ public class QuizQuestion {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    @Transient
+    public String getCreatedAtFormatted() {
+        if (this.createdAt == null) {
+            return "";
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+        return this.createdAt.format(formatter);
     }
 }

@@ -7,30 +7,80 @@
     <h1 class="page-title">퀴즈 풀기</h1>
 
     <div class="card" th:if="${question != null}">
-        <p style="font-size:14px; color:#6b7280; margin-top:0; margin-bottom:8px;">
-            문제 <span th:text="${question.numberTag}">1</span>
-        </p>
-        <p style="font-size:16px; font-weight:500;"
-           th:text="${question.questionText}">문제 내용</p>
-
-        <div th:if="${question.multipleChoice && question.choices != null}"
-             style="margin-top:10px; font-size:14px;">
-            <strong>(보기)</strong>
-            <p th:text="${question.choices}"></p>
+        <div class="question-header-banner">
+            <div class="question-number-box">
+                <span th:text="'문제 ' + ${question.numberTag}">문제 1</span>
+            </div>
+            <span class="question-tag">차분히 풀어봐요</span>
         </div>
 
-        <form th:action="@{'/quiz/solve/' + ${question.id}}" method="post" style="margin-top:14px;">
-            <label for="answer" style="font-size:14px; font-weight:500;">나의 답</label>
-            <input id="answer" type="text" name="answer" required>
+        <p style="font-size:17px; font-weight:600; margin-top:12px; white-space:pre-wrap;"
+           th:text="${question.questionText}">문제 내용</p>
 
-            <button type="submit" class="btn" style="margin-top:8px;">제출하기</button>
+        <form id="quizSolveForm"
+              th:action="@{'/quiz/solve/' + ${question.id}}"
+              method="post"
+              style="margin-top:18px;">
+
+            <div th:if="${choiceList != null && !#lists.isEmpty(choiceList)}">
+                <p style="font-size:14px; color:#6b7280; margin-bottom:12px;">
+                    원하는 보기를 클릭해 주세요.
+                </p>
+                <div class="choice-vertical">
+                    <button type="button"
+                            class="choice-option"
+                            th:each="choice : ${choiceList}"
+                            th:data-value="${choice.value}">
+                        <span class="choice-index"
+                              th:text="${choice.number != null ? choice.number + '.' : ''}"></span>
+                        <span class="choice-text"
+                              th:text="${choice.text}"></span>
+                    </button>
+                </div>
+                <input type="hidden" id="selectedAnswer" name="answer">
+            </div>
+
+            <div th:if="${choiceList == null || #lists.isEmpty(choiceList)}"
+                 style="margin-top:12px;">
+                <label for="answerText"
+                       style="font-size:14px; font-weight:500;">주관식 답을 입력해 주세요</label>
+                <input id="answerText" type="text" name="answer" required>
+            </div>
+
+            <button type="submit" class="btn" style="margin-top:14px; width:100%;">
+                제출하고 다음 문제로
+            </button>
         </form>
     </div>
 
-    <div style="margin-top:10px;">
-        <a href="/quiz/list" class="btn btn-outline">← 퀴즈 목록으로</a>
+    <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-start;">
+        <a href="/quiz/list" class="btn btn-outline">문제 목록 보기</a>
+        <a href="/quiz/next" class="btn btn-outline">안 푼 문제로 이동</a>
     </div>
 
 </div>
+
+<script th:if="${choiceList != null && !#lists.isEmpty(choiceList)}">
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.choice-option');
+        const hiddenInput = document.getElementById('selectedAnswer');
+        const form = document.getElementById('quizSolveForm');
+
+        buttons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                hiddenInput.value = btn.dataset.value;
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            if (!hiddenInput.value || !hiddenInput.value.trim()) {
+                e.preventDefault();
+                alert('보기를 선택해 주세요.');
+            }
+        });
+    });
+</script>
 </body>
 </html>

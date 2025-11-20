@@ -1,7 +1,10 @@
 package com.example.sbb.repository;
 
+import com.example.sbb.domain.document.DocumentFile;
 import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,4 +19,8 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
 
     // 틀린 문제
     List<QuizQuestion> findByUserAndSolvedTrueAndCorrectFalseOrderByCreatedAtAsc(SiteUser user);
+
+    Page<QuizQuestion> findByUserOrderByCreatedAtAsc(SiteUser user, Pageable pageable);
+
+    void deleteAllByDocument(DocumentFile documentFile);
 }

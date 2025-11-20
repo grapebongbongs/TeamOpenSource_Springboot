@@ -92,7 +92,8 @@ public class GeminiQuestionService {
     // 2) 여러 PDF → 한 번에 문제 생성
     // =========================
     public String generateQuestionsFromMultiplePdfs(List<byte[]> pdfBytesList,
-                                                    List<String> originalNames) {
+                                                    List<String> originalNames,
+                                                    String stylePrompt) {
 
         if (pdfBytesList == null || pdfBytesList.isEmpty()) {
             return "⚠ 전달된 PDF가 없습니다.";
@@ -110,7 +111,7 @@ public class GeminiQuestionService {
             titleBuilder.append("\n");
         }
 
-        String prompt = """
+        String basePrompt = """
                 너는 대학 강의자료나 교재 PDF를 기반으로 학습용 문제를 만들어주는 도우미야.
 
                 아래에 첨부된 여러 개의 PDF 문서를 모두 읽고,
@@ -129,11 +130,18 @@ public class GeminiQuestionService {
 
                 주관식 문제에는 (보기)를 넣지 말고, 정답과 해설만 작성해줘.
 
-                """ + titleBuilder;
+                """;
+        StringBuilder promptBuilder = new StringBuilder(basePrompt).append("\n").append(titleBuilder);
+        if (stylePrompt != null && !stylePrompt.isBlank()) {
+            promptBuilder
+                    .append("\n사용자가 원하는 문제 스타일/중점 사항:\n")
+                    .append(stylePrompt)
+                    .append("\n가능한 한 위 요구사항을 반영해서 문제를 만들어줘.\n");
+        }
 
         // 1) parts 리스트 구성: 첫 번째 part는 텍스트 prompt
         List<Map<String, Object>> parts = new ArrayList<>();
-        parts.add(Map.of("text", prompt));
+        parts.add(Map.of("text", promptBuilder.toString()));
 
         // 2) 각 PDF를 inlineData로 추가
         for (byte[] pdfBytes : pdfBytesList) {
