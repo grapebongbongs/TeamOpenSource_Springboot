@@ -19,25 +19,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/", "/signup", "/login", "/css/**", "/js/**").permitAll()
-                    .anyRequest().authenticated()
+                // 🔥 정적 리소스 전체 허용 (필수!)
+                .requestMatchers(
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/fonts/**",
+                    "/favicon.ico",
+                    "/webjars/**"
+                ).permitAll()
+
+                // 🔥 기본 페이지 및 로그인/회원가입 허용
+                .requestMatchers("/", "/signup", "/login").permitAll()
+
+                // 🔒 나머지 요청은 인증 필요
+                .anyRequest().authenticated()
             )
             .formLogin(login -> login
-                    .loginPage("/login")
-                    .loginProcessingUrl("/login")
-                    .defaultSuccessUrl("/", true)
-                    .failureUrl("/login?error=true")
-                    .permitAll()
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/login?error=true")
+                .permitAll()
             )
             .logout(logout -> logout
-                    // ✅ GET 요청으로 로그아웃도 허용 (개발환경 편의)
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                    .logoutSuccessUrl("/")   // 로그아웃 후 홈으로 이동
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID")
-                    .permitAll()
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                .logoutSuccessUrl("/")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
             );
 
         return http.build();

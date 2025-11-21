@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko"
-      th:replace="layout :: layout(~{::body})">
+      th:replace="~{layout :: layout(~{::body})}">
 <body>
 <div>
 
@@ -20,47 +20,74 @@
             </div>
         </div>
 
+        <!-- 문제 없음 -->
         <div th:if="${#lists.isEmpty(questions)}" class="empty-text">
             아직 생성된 문제가 없습니다. PDF를 업로드하고 문제를 만들어 보세요.
         </div>
 
+        <!-- 문제 있음 -->
         <div th:if="${!#lists.isEmpty(questions)}" class="question-stack">
             <div class="question-card"
                  th:each="q : ${questions}"
-                 th:classappend="${!q.solved} ? ' pending' : (q.correct != null && q.correct ? ' correct' : ' wrong')">
+                 th:classappend="
+                    ${not q.solved} ? 'pending'
+                    : (q.correct ? 'correct' : 'wrong')
+                 ">
                 <div class="question-card__header">
                     <span class="badge"
-                          th:classappend="${!q.solved} ? ' badge-pending' : (q.correct != null && q.correct ? ' badge-correct' : ' badge-wrong')"
-                          th:text="${!q.solved} ? '대기' : (q.correct != null && q.correct ? '정답' : '오답')">대기</span>
+                          th:classappend="
+                            ${not q.solved} ? 'badge-pending'
+                             : (q.correct ? 'badge-correct' : 'badge-wrong')
+                          "
+                          th:text="
+                            ${not q.solved} ? '대기'
+                             : (q.correct ? '정답' : '오답')
+                          ">대기</span>
+
                     <span class="question-number"
                           th:text="'문제 ' + ${q.numberTag}">문제</span>
+
                     <span style="margin-left:auto; font-size:12px; color:#9ca3af;"
                           th:text="${q.createdAtFormatted}">날짜</span>
                 </div>
+
                 <p class="question-card__text"
                    th:text="${q.questionText}"></p>
+
                 <div class="question-card__actions">
                     <a th:href="@{'/quiz/solve/' + ${q.id}}"
-                       th:text="${!q.solved} ? '풀기' : (q.correct != null && q.correct ? '다시 보기' : '다시 풀기')"
+                       th:text="
+                         ${not q.solved} ? '풀기'
+                          : (q.correct ? '다시 보기' : '다시 풀기')
+                       "
                        class="btn"></a>
                 </div>
             </div>
         </div>
 
+        <!-- 페이징 -->
         <div class="pagination" th:if="${totalPages > 1}">
+
+            <!-- 이전 버튼 -->
             <a class="page-button"
                th:classappend="${hasPrevious} ? '' : ' disabled'"
-               th:href="${hasPrevious} ? @{/quiz/list(page=${currentPage - 1})} : '#'}">
+               th:href="${hasPrevious} ? '/quiz/list?page=' + (${currentPage} - 1) : '#'">
                 ← 이전
             </a>
+
             <span class="page-info"
-                  th:text="'페이지 ' + (${currentPage} + 1) + ' / ' + ${totalPages}">페이지</span>
+                  th:text="'페이지 ' + (${currentPage} + 1) + ' / ' + ${totalPages}">
+                페이지
+            </span>
+
+            <!-- 다음 버튼 -->
             <a class="page-button"
                th:classappend="${hasNext} ? '' : ' disabled'"
-               th:href="${hasNext} ? @{/quiz/list(page=${currentPage + 1})} : '#'}">
+               th:href="${hasNext} ? '/quiz/list?page=' + (${currentPage} + 1) : '#'">
                 다음 →
             </a>
         </div>
+
     </div>
 
 </div>

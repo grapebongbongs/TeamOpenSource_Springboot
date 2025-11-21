@@ -37,6 +37,8 @@ public class QuizController {
 
         SiteUser user = userService.getUser(principal.getName());
 
+/////////////////////////////////////////////////////////////////////////////
+
         int pageIndex = Math.max(page, 0);
         Pageable pageable = PageRequest.of(pageIndex, 10, Sort.by("createdAt").ascending());
         Page<QuizQuestion> pageData = quizQuestionRepository.findByUserOrderByCreatedAtAsc(user, pageable);
@@ -49,6 +51,8 @@ public class QuizController {
         model.addAttribute("hasPrevious", pageData.hasPrevious());
         model.addAttribute("hasNext", pageData.hasNext());
         model.addAttribute("totalElements", pageData.getTotalElements());
+
+        //////////////////////////////////////////////////////////////////////////////////////////
 
         return "quiz_list";
     }
