@@ -1,6 +1,7 @@
 package com.example.sbb.controller;
 
 import com.example.sbb.domain.document.DocumentFile;
+import com.example.sbb.domain.document.DocumentService;
 import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
@@ -39,6 +40,7 @@ public class UploadController {
     private final GeminiQuestionService geminiQuestionService;
     private final QuizService quizService;
     private final QuizQuestionRepository quizQuestionRepository;
+    private final DocumentService documentService;
 
     // ===========================
     // 업로드 폼
@@ -92,7 +94,16 @@ public class UploadController {
             );
             doc.setUploadedAt(LocalDateTime.now());
 
-            documentFileRepository.save(doc);
+            DocumentFile saved = documentFileRepository.save(doc);
+
+            // PDF 텍스트 추출 → 스케줄러가 활용할 수 있도록 DB에 저장
+            try {
+                String extracted = documentService.extractText(dest.getAbsolutePath());
+                saved.setExtractedText(extracted);
+                documentFileRepository.save(saved);
+            } catch (Exception extractEx) {
+                extractEx.printStackTrace();
+            }
 
             return "redirect:/document/list";
 

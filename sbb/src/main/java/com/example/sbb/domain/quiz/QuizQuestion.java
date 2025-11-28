@@ -3,6 +3,7 @@ package com.example.sbb.domain.quiz;
 import com.example.sbb.domain.document.DocumentFile;
 import com.example.sbb.domain.user.SiteUser;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +43,9 @@ public class QuizQuestion {
     private boolean solved = false;   // 풀었는지
     private Boolean correct;          // 맞았는지(null: 아직 안품)
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     // ===== getter / setter =====
     public Long getId() {
@@ -131,6 +134,17 @@ public class QuizQuestion {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 
     @Transient

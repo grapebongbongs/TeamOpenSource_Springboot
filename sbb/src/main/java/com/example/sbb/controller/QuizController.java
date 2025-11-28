@@ -29,29 +29,33 @@ public class QuizController {
     private final UserService userService;
 
     // 전체 퀴즈 목록(간단히)
-    @GetMapping("/list")
-    public String list(Model model,
-                       Principal principal,
-                       @RequestParam(value = "page", defaultValue = "0") int page) {
-        if (principal == null) return "redirect:/login";
+  @GetMapping("/list")
+public String list(Model model,
+                   Principal principal,
+                   @RequestParam(value = "page", defaultValue = "0") int page) {
+    if (principal == null) return "redirect:/login";
 
-        SiteUser user = userService.getUser(principal.getName());
+    // TODO: JPA 로직 전부 잠시 주석 처리
+    
+    SiteUser user = userService.getUser(principal.getName());
 
-        int pageIndex = Math.max(page, 0);
+    int pageIndex = Math.max(page, 0);
         Pageable pageable = PageRequest.of(pageIndex, 10, Sort.by("createdAt").ascending());
         Page<QuizQuestion> pageData = quizQuestionRepository.findByUserOrderByCreatedAtAsc(user, pageable);
 
-        int totalPages = pageData.getTotalPages() == 0 ? 1 : pageData.getTotalPages();
+    int totalPages = pageData.getTotalPages() == 0 ? 1 : pageData.getTotalPages();
 
-        model.addAttribute("questions", pageData.getContent());
-        model.addAttribute("currentPage", pageData.getNumber());
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("hasPrevious", pageData.hasPrevious());
-        model.addAttribute("hasNext", pageData.hasNext());
-        model.addAttribute("totalElements", pageData.getTotalElements());
+    model.addAttribute("questions", pageData.getContent());
+    model.addAttribute("currentPage", pageData.getNumber());
+    model.addAttribute("totalPages", totalPages);
+    model.addAttribute("hasPrevious", pageData.hasPrevious());
+    model.addAttribute("hasNext", pageData.hasNext());
+    model.addAttribute("totalElements", pageData.getTotalElements());
+    
 
-        return "quiz_list";
-    }
+    return "quiz_list";
+}
+
 
     @GetMapping("/next")
     public String goToNext(Principal principal,

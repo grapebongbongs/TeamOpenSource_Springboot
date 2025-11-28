@@ -18,6 +18,10 @@
         </p>
     </div>
 
+    <div class="card" th:if="${savedCount == null}">
+        <p style="margin:0;">
+            생성 결과를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </p>
     </div>
 
     <div style="margin-top:10px; display:flex; gap:8px;">
