@@ -22,7 +22,8 @@ public class QuizService {
      */
     public List<QuizQuestion> saveFromRawText(String rawText,
                                               SiteUser user,
-                                              List<DocumentFile> sourceDocs) {
+                                              List<DocumentFile> sourceDocs,
+                                              com.example.sbb.domain.Folder defaultFolder) {
 
         List<QuizQuestion> result = new ArrayList<>();
 
@@ -33,6 +34,8 @@ public class QuizService {
         String[] lines = rawText.split("\\R"); // 개행 기준 split
         QuizQuestion current = null;
         StringBuilder questionBuffer = new StringBuilder();
+        StringBuilder choiceBuffer = new StringBuilder();
+        boolean readingChoices = false;
 
         for (String line : lines) {
             String trimmed = line.trim();
@@ -41,17 +44,18 @@ public class QuizService {
             if (trimmed.matches("^\\[\\d+].*")) {
                 // 이전 문제 마무리
                 if (current != null) {
-                    current.setQuestionText(questionBuffer.toString().trim());
-                    quizQuestionRepository.save(current);
-                    result.add(current);
+                    finalizeQuestion(current, questionBuffer, choiceBuffer, result);
                 }
 
                 current = new QuizQuestion();
                 current.setUser(user);
 
                 if (sourceDocs != null && !sourceDocs.isEmpty()) {
-                    // 여러 PDF를 기반으로 했으니 일단 첫 번째나 null로 둘 수 있음
-                    current.setDocument(sourceDocs.get(0));
+                    DocumentFile firstDoc = sourceDocs.get(0);
+                    current.setDocument(firstDoc);
+                    current.setFolder(firstDoc.getFolder());
+                } else if (defaultFolder != null) {
+                    current.setFolder(defaultFolder);
                 }
 
                 questionBuffer.setLength(0);
@@ -66,24 +70,45 @@ public class QuizService {
 
                 // 문제 텍스트 부분 ("]" 뒤로)
                 String afterBracket = trimmed.replaceFirst("^\\[\\d+].\\s*", "");
+                readingChoices = false;
+                choiceBuffer.setLength(0);
                 questionBuffer.append(afterBracket).append(" ");
 
             } else if (trimmed.startsWith("(보기)")) {
                 if (current != null) {
                     current.setMultipleChoice(true);
-                    // "(보기)" 제거 후 보기를 통째로 저장
+                    choiceBuffer.setLength(0);
                     String choicePart = trimmed.replaceFirst("^\\(보기\\)\\s*", "");
-                    current.setChoices(choicePart);
+                    choiceBuffer.append(choicePart);
+                    if (!choicePart.endsWith("\n")) {
+                        choiceBuffer.append("\n");
+                    }
+                    readingChoices = true;
                 }
             } else if (trimmed.startsWith("[정답]")) {
                 if (current != null) {
+                    if (choiceBuffer.length() > 0) {
+                        current.setMultipleChoice(true);
+                        current.setChoices(choiceBuffer.toString().trim());
+                    }
                     String ans = trimmed.replaceFirst("^\\[정답]\\s*", "");
                     current.setAnswer(ans);
                 }
+                readingChoices = false;
             } else if (trimmed.startsWith("[해설]")) {
                 if (current != null) {
+                    if (choiceBuffer.length() > 0 && current.getChoices() == null) {
+                        current.setMultipleChoice(true);
+                        current.setChoices(choiceBuffer.toString().trim());
+                    }
                     String exp = trimmed.replaceFirst("^\\[해설]\\s*", "");
                     current.setExplanation(exp);
+                }
+                readingChoices = false;
+            } else if (readingChoices && current != null) {
+                choiceBuffer.append(trimmed);
+                if (!trimmed.endsWith("\n")) {
+                    choiceBuffer.append("\n");
                 }
             } else {
                 // 기타 줄은 문제 본문에 이어 붙임
@@ -95,11 +120,24 @@ public class QuizService {
 
         // 마지막 문제 마무리
         if (current != null) {
-            current.setQuestionText(questionBuffer.toString().trim());
-            quizQuestionRepository.save(current);
-            result.add(current);
+            finalizeQuestion(current, questionBuffer, choiceBuffer, result);
         }
 
         return result;
+    }
+
+    private void finalizeQuestion(QuizQuestion current,
+                                  StringBuilder questionBuffer,
+                                  StringBuilder choiceBuffer,
+                                  List<QuizQuestion> result) {
+        current.setQuestionText(questionBuffer.toString().trim());
+        if (choiceBuffer.length() > 0 && (current.getChoices() == null || current.getChoices().isBlank())) {
+            current.setMultipleChoice(true);
+            current.setChoices(choiceBuffer.toString().trim());
+        }
+        quizQuestionRepository.save(current);
+        result.add(current);
+        questionBuffer.setLength(0);
+        choiceBuffer.setLength(0);
     }
 }

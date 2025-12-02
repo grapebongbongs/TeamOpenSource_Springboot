@@ -1,5 +1,6 @@
 package com.example.sbb.domain.document;
 
+import com.example.sbb.domain.Folder;
 import com.example.sbb.domain.user.SiteUser;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -20,10 +21,6 @@ public class DocumentFile {
     @Column(nullable = false)
     private String storedFilename;
 
-    // 파일이 저장된 경로 (상대경로 또는 절대경로)
-    @Column(nullable = false)
-    private String filePath;
-
     // 파일 크기 (byte)
     @Column(nullable = false)
     private Long fileSize;
@@ -37,6 +34,11 @@ public class DocumentFile {
     @JoinColumn(name = "user_id")
     private SiteUser user;
 
+    // 과목/폴더
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
+
     // ✅ PDF에서 추출한 텍스트를 저장할 필드 (스케줄러/Gemini용)
     @Column(columnDefinition = "LONGTEXT")
     private String extractedText;
@@ -46,12 +48,10 @@ public class DocumentFile {
 
     public DocumentFile(String originalFilename,
                         String storedFilename,
-                        String filePath,
                         Long fileSize,
                         SiteUser user) {
         this.originalFilename = originalFilename;
         this.storedFilename = storedFilename;
-        this.filePath = filePath;
         this.fileSize = fileSize;
         this.user = user;
         this.uploadedAt = LocalDateTime.now();
@@ -77,14 +77,6 @@ public class DocumentFile {
 
     public void setStoredFilename(String storedFilename) {
         this.storedFilename = storedFilename;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
     }
 
     public Long getFileSize() {
@@ -118,5 +110,13 @@ public class DocumentFile {
 
     public void setExtractedText(String extractedText) {
         this.extractedText = extractedText;
+    }
+
+    public Folder getFolder() {
+        return folder;
+    }
+
+    public void setFolder(Folder folder) {
+        this.folder = folder;
     }
 }

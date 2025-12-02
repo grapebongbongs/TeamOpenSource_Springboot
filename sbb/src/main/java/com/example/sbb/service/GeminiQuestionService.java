@@ -124,7 +124,7 @@ public class GeminiQuestionService {
                 각 문제는 반드시 아래 형식을 지켜줘:
 
                 [번호]. 문제 내용
-                (보기) 1) ..., 2) ..., 3) ..., 4) ...   <-- 객관식일 때만
+                (보기) 1. ... 2. ... 3. ... 4. ...   <-- 객관식일 때만
                 [정답] 숫자 또는 텍스트
                 [해설] 한두 문장으로 간단하게 이유 설명
 
@@ -175,6 +175,71 @@ public class GeminiQuestionService {
     // =========================
     public String generateQuestionsFromText(String text) {
         return generateQuestionsFromText(null, text);
+    }
+
+    public String generateQuestionsFromTexts(List<String> texts,
+                                             List<String> originalNames,
+                                             String stylePrompt) {
+        if (texts == null || texts.isEmpty()) {
+            return "⚠ 전달된 텍스트가 없습니다.";
+        }
+
+        StringBuilder namePart = new StringBuilder();
+        if (originalNames != null && !originalNames.isEmpty()) {
+            namePart.append("다음 자료를 기반으로 문제를 만들어줘:\n");
+            for (String name : originalNames) {
+                if (name != null && !name.isBlank()) {
+                    namePart.append("- ").append(name).append("\n");
+                }
+            }
+            namePart.append("\n");
+        }
+
+        StringBuilder textBundle = new StringBuilder();
+        for (int i = 0; i < texts.size(); i++) {
+            String label = (originalNames != null && i < originalNames.size())
+                    ? originalNames.get(i)
+                    : "자료 " + (i + 1);
+            textBundle.append("### ").append(label).append("\n")
+                    .append(texts.get(i)).append("\n\n");
+        }
+
+        StringBuilder prompt = new StringBuilder("""
+                너는 대학 강의자료나 교재 텍스트를 기반으로 학습용 문제를 만들어주는 도우미야.
+
+                모든 텍스트를 종합하여 총 10문제를 만들어줘.
+                - 객관식 6문제 (보기는 4개, 번호를 꼭 붙여줘)
+                - 주관식(단답형/서술형) 4문제
+
+                각 문제는 아래 형식을 꼭 지켜줘:
+                [번호]. 문제 내용
+                (보기) 1. ... 2. ... 3. ... 4. ...   <-- 객관식일 때만
+                [정답] 숫자 또는 텍스트
+                [해설] 한두 문장으로 간단하게 이유 설명
+
+                주관식 문제에는 (보기)를 넣지 말아줘.
+
+                """);
+
+        if (stylePrompt != null && !stylePrompt.isBlank()) {
+            prompt.append("사용자 요청 스타일:\n").append(stylePrompt).append("\n\n");
+        }
+        prompt.append(namePart);
+        prompt.append("아래 텍스트 전체를 분석해서 문제를 만들어줘:\n");
+        prompt.append(textBundle);
+
+        Map<String, Object> body = Map.of(
+                "contents", List.of(
+                        Map.of(
+                                "role", "user",
+                                "parts", List.of(
+                                        Map.of("text", prompt.toString())
+                                )
+                        )
+                )
+        );
+
+        return callGemini(body);
     }
 
     private String generateQuestionsFromText(String originalName, String text) {

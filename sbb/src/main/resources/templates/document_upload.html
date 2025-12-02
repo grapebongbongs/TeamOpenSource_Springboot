@@ -16,7 +16,8 @@
         <!-- ✅ CSRF + action 추가 -->
         <form method="post"
               enctype="multipart/form-data"
-              th:action="@{/document/upload}">
+              th:action="@{/document/upload}"
+              style="display:flex; flex-direction:column; gap:10px;">
 
             <!-- ✅ Spring Security CSRF 토큰 -->
             <input type="hidden"
@@ -33,6 +34,24 @@
                        name="pdfFile"
                        accept="application/pdf"
                        required>
+            </div>
+
+            <div>
+                <label for="folderId"
+                       style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">
+                    저장할 폴더 (선택)
+                </label>
+                <select id="folderId" name="folderId">
+                    <option value="" th:selected="${selectedFolderId == null}">폴더 없이 업로드</option>
+                    <option th:each="folder : ${folders}"
+                            th:value="${folder.id}"
+                            th:text="${folder.name}"
+                            th:selected="${selectedFolderId != null and selectedFolderId == folder.id}">
+                    </option>
+                </select>
+                <p style="margin:4px 0 0; font-size:12px; color:#9ca3af;">
+                    폴더가 없다면 <a href="/folders">폴더 페이지</a>에서 추가하세요.
+                </p>
             </div>
 
             <button type="submit" class="btn">업로드</button>

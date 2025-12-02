@@ -1,6 +1,7 @@
 package com.example.sbb.repository;
 
 import com.example.sbb.domain.document.DocumentFile;
+import com.example.sbb.domain.Folder;
 import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
 
     // 아직 안 푼 문제
     List<QuizQuestion> findByUserAndSolvedFalseOrderByCreatedAtAsc(SiteUser user);
+    List<QuizQuestion> findByUserAndFolderAndSolvedFalseOrderByCreatedAtAsc(SiteUser user, Folder folder);
 
     // 맞은 문제
     List<QuizQuestion> findByUserAndSolvedTrueAndCorrectTrueOrderByCreatedAtAsc(SiteUser user);
@@ -21,6 +23,9 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
     List<QuizQuestion> findByUserAndSolvedTrueAndCorrectFalseOrderByCreatedAtAsc(SiteUser user);
 
     Page<QuizQuestion> findByUserOrderByCreatedAtAsc(SiteUser user, Pageable pageable);
+    Page<QuizQuestion> findByUserAndFolderOrderByCreatedAtAsc(SiteUser user, Folder folder, Pageable pageable);
+    List<QuizQuestion> findByUserOrderByCreatedAtAsc(SiteUser user);
+    List<QuizQuestion> findByUserAndFolderOrderByCreatedAtAsc(SiteUser user, Folder folder);
 
     void deleteAllByDocument(DocumentFile documentFile);
 }

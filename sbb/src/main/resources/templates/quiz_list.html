@@ -149,6 +149,21 @@
 <div th:with="firstQuestion=${#lists.isEmpty(questions) ? null : questions[0]}">
 
     <h1 class="page-title">My Questions</h1>
+    <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <form th:action="@{/quiz/list}" method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <select name="folderId"
+                    style="min-width:200px; padding:8px 10px; border-radius:8px; border:1px solid #d1d5db;">
+                <option value="" th:selected="${selectedFolder == null}">전체 폴더</option>
+                <option th:each="folder : ${folders}"
+                        th:value="${folder.id}"
+                        th:text="${folder.name}"
+                        th:selected="${selectedFolder != null and selectedFolder.id == folder.id}">
+                </option>
+            </select>
+            <button type="submit" class="btn btn-outline" style="padding:6px 12px;">폴더 적용</button>
+        </form>
+        <a th:href="@{/folders}" class="btn btn-outline" style="margin-left:auto;">📂 폴더 관리</a>
+    </div>
 
     <div th:if="${message}" class="alert alert-success" style="margin-bottom:14px;">
         <span th:text="${message}"></span>
@@ -158,9 +173,9 @@
         아직 생성된 문제가 없습니다. PDF를 업로드하고 문제를 만들어 보세요.
     </div>
 
-    <div th:if="${firstQuestion != null}" class="highlight-card"
-         th:data-correct-answer="${firstQuestion.answer}"
-         th:data-has-choice="${firstQuestion.multipleChoice}">
+        <div th:if="${firstQuestion != null}" class="highlight-card"
+             th:data-correct-answer="${firstQuestion.answer}"
+             th:data-has-choice="${firstQuestion.multipleChoice}">
         <div class="highlight-header">
             <span class="highlight-pill">오늘의 첫 문제</span>
             <div class="highlight-meta">
@@ -178,10 +193,10 @@
              id="interactiveChoices">
             <div class="choice-chip"
                  data-role="choice-option"
-                 th:each="choice : ${#strings.arraySplit(firstQuestion.choices, '\n')}"
-                 th:if="${!#strings.isEmpty(choice)}"
-                 th:data-value="${choice}"
-                 th:text="${#strings.trim(choice)}">
+                 th:each="choice : ${firstChoiceList}"
+                 th:data-value="${choice.value}">
+                <span th:text="${choice.number != null ? choice.number + '.' : ''}" style="font-weight:700; min-width:20px;"></span>
+                <span th:text="${choice.text}"></span>
             </div>
         </div>
 
@@ -201,9 +216,11 @@
                     style="flex:0 0 auto;">
                 정답 확인
             </button>
-            <a th:href="@{'/quiz/solve/' + ${firstQuestion.id}}"
-               class="btn btn-outline">
-                자세히 풀기
+
+            <!-- 🔧 여기 부분이 문제였던 곳: th:href 하나로 합침 -->
+            <a th:href="${selectedFolder != null} ? @{/quiz/solve/{id}(id=${firstQuestion.id}, folderId=${selectedFolder.id})} : @{/quiz/solve/{id}(id=${firstQuestion.id})}"
+               class="btn">
+                바로 풀러가기
             </a>
         </div>
 
@@ -242,7 +259,7 @@
             <div th:each="q : ${questions}"
                  class="question-sheet__card"
                  th:classappend="${not q.solved ? ' pending' : (q.correct != null and q.correct ? ' correct' : ' wrong')}"
-                 th:data-link="@{'/quiz/solve/' + ${q.id}}">
+                 th:data-link="${selectedFolder != null} ? @{/quiz/solve/{id}(id=${q.id}, folderId=${selectedFolder.id})} : @{/quiz/solve/{id}(id=${q.id})}">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong th:text="'문제 ' + ${q.numberTag}">문제</strong>
                     <span style="font-size:12px; color:#6b7280;"
@@ -255,14 +272,14 @@
             <div class="pagination" th:if="${totalPages > 1}">
                 <a class="page-button"
                    th:classappend="${hasPrevious} ? '' : ' disabled'"
-                   th:href="${hasPrevious} ? @{/quiz/list(page=${currentPage - 1})} : '#'}">
+                   th:href="${hasPrevious} ? (${selectedFolder != null} ? @{/quiz/list(page=${currentPage - 1}, folderId=${selectedFolder.id})} : @{/quiz/list(page=${currentPage - 1})}) : '#'}">
                     ← 이전
                 </a>
                 <span class="page-info"
                       th:text="'페이지 ' + (${currentPage} + 1) + ' / ' + ${totalPages}">페이지</span>
                 <a class="page-button"
                    th:classappend="${hasNext} ? '' : ' disabled'"
-                   th:href="${hasNext} ? @{/quiz/list(page=${currentPage + 1})} : '#'}">
+                   th:href="${hasNext} ? (${selectedFolder != null} ? @{/quiz/list(page=${currentPage + 1}, folderId=${selectedFolder.id})} : @{/quiz/list(page=${currentPage + 1})}) : '#'}">
                     다음 →
                 </a>
             </div>

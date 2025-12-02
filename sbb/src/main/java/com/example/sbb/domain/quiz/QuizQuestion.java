@@ -1,6 +1,7 @@
 package com.example.sbb.domain.quiz;
 
 import com.example.sbb.domain.document.DocumentFile;
+import com.example.sbb.domain.Folder;
 import com.example.sbb.domain.user.SiteUser;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,6 +23,10 @@ public class QuizQuestion {
     // 어떤 PDF 세트에서 만들어졌는지 (필수는 아님)
     @ManyToOne(fetch = FetchType.LAZY)
     private DocumentFile document;    // 필요 없다면 나중에 null로 둬도 됨
+
+    // 어떤 과목(폴더)에 속하는지
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Folder folder;
 
     // [1], [2] 같은 문제 번호 (문제 생성 시의 번호)
     private Integer numberTag;
@@ -66,6 +71,14 @@ public class QuizQuestion {
 
     public void setDocument(DocumentFile document) {
         this.document = document;
+    }
+
+    public Folder getFolder() {
+        return folder;
+    }
+
+    public void setFolder(Folder folder) {
+        this.folder = folder;
     }
 
     public Integer getNumberTag() {

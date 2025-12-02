@@ -2,10 +2,12 @@ package com.example.sbb.controller;
 
 import com.example.sbb.domain.document.DocumentFile;
 import com.example.sbb.domain.document.DocumentService;
+import com.example.sbb.domain.Folder;
 import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
 import com.example.sbb.repository.DocumentFileRepository;
+import com.example.sbb.repository.FolderRepository;
 import com.example.sbb.repository.QuizQuestionRepository;
 import com.example.sbb.service.GeminiQuestionService;
 import com.example.sbb.service.QuizService;
@@ -41,12 +43,22 @@ public class UploadController {
     private final QuizService quizService;
     private final QuizQuestionRepository quizQuestionRepository;
     private final DocumentService documentService;
+    private final FolderRepository folderRepository;
 
     // ===========================
     // 업로드 폼
     // ===========================
     @GetMapping("/upload")
-    public String form() {
+    public String form(@RequestParam(value = "folderId", required = false) Long folderId,
+                       Model model,
+                       Principal principal) {
+        if (principal == null) {
+            return "redirect:/user/login";
+        }
+
+        SiteUser user = userService.getUser(principal.getName());
+        model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+        model.addAttribute("selectedFolderId", folderId);
         return "document_upload";
     }
 
@@ -55,6 +67,7 @@ public class UploadController {
     // ===========================
     @PostMapping("/upload")
     public String upload(@RequestParam("pdfFile") MultipartFile file,
+                         @RequestParam(value = "folderId", required = false) Long folderId,
                          Principal principal) {
 
         try {
@@ -75,6 +88,7 @@ public class UploadController {
             // 파일명 구성
             String originalName = file.getOriginalFilename();
             String storedName = System.currentTimeMillis() + "_" + originalName;
+            byte[] fileBytes = file.getBytes();
 
             // 실제 저장
             File dest = new File(dir, storedName);
@@ -82,30 +96,36 @@ public class UploadController {
 
             // 현재 유저 조회
             SiteUser user = userService.getUser(principal.getName());
-            String relativePath = "uploads" + File.separator + storedName;
+            Folder selectedFolder = null;
+            if (folderId != null) {
+                selectedFolder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+            }
 
             // DocumentFile 엔티티 생성 및 저장
             DocumentFile doc = new DocumentFile(
                     originalName,
                     storedName,
-                    relativePath,
                     file.getSize(),
                     user
             );
             doc.setUploadedAt(LocalDateTime.now());
+            if (selectedFolder != null) {
+                doc.setFolder(selectedFolder);
+            }
 
             DocumentFile saved = documentFileRepository.save(doc);
 
             // PDF 텍스트 추출 → 스케줄러가 활용할 수 있도록 DB에 저장
             try {
-                String extracted = documentService.extractText(dest.getAbsolutePath());
+                String extracted = documentService.extractText(fileBytes);
                 saved.setExtractedText(extracted);
                 documentFileRepository.save(saved);
             } catch (Exception extractEx) {
                 extractEx.printStackTrace();
             }
 
-            return "redirect:/document/list";
+            String redirectSuffix = (selectedFolder != null) ? "?folderId=" + selectedFolder.getId() : "";
+            return "redirect:/document/list" + redirectSuffix;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,15 +137,26 @@ public class UploadController {
     // 내 PDF 목록
     // ===========================
     @GetMapping("/list")
-    public String list(Model model, Principal principal) {
+    public String list(@RequestParam(value = "folderId", required = false) Long folderId,
+                       Model model,
+                       Principal principal) {
 
         if (principal == null) {
             return "redirect:/user/login";
         }
 
         SiteUser user = userService.getUser(principal.getName());
-        List<DocumentFile> files = documentFileRepository.findByUser(user);
+        Folder selectedFolder = null;
+        if (folderId != null) {
+            selectedFolder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+        }
 
+        List<DocumentFile> files = (selectedFolder != null)
+                ? documentFileRepository.findByUserAndFolder(user, selectedFolder)
+                : documentFileRepository.findByUser(user);
+
+        model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+        model.addAttribute("selectedFolder", selectedFolder);
         model.addAttribute("files", files);
         return "document_list";
     }
@@ -136,6 +167,7 @@ public class UploadController {
     @PostMapping("/delete/{id}")
     @Transactional
     public String deleteDocument(@PathVariable Long id,
+                                 @RequestParam(value = "folderId", required = false) Long folderId,
                                  Principal principal,
                                  RedirectAttributes rttr) {
 
@@ -173,7 +205,8 @@ public class UploadController {
             e.printStackTrace();
         }
 
-        return "redirect:/document/list";
+        String suffix = (file.getFolder() != null) ? "?folderId=" + file.getFolder().getId() : "";
+        return "redirect:/document/list" + suffix;
     }
 
     // ===========================
@@ -181,6 +214,7 @@ public class UploadController {
     // ===========================
     @GetMapping("/makeprob")
     public String makeProblemFromList(@RequestParam(value = "stylePrompt", required = false) String stylePrompt,
+                                      @RequestParam(value = "folderId", required = false) Long folderId,
                                       Principal principal,
                                       Model model) {
 
@@ -189,48 +223,73 @@ public class UploadController {
         }
 
         SiteUser user = userService.getUser(principal.getName());
-        List<DocumentFile> files = documentFileRepository.findByUser(user);
+        Folder selectedFolder = null;
+        if (folderId != null) {
+            selectedFolder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+        }
+        List<DocumentFile> files = (selectedFolder != null)
+                ? documentFileRepository.findByUserAndFolder(user, selectedFolder)
+                : documentFileRepository.findByUser(user);
 
         if (files.isEmpty()) {
             model.addAttribute("error", "PDF가 존재하지 않습니다. 먼저 업로드해 주세요.");
             model.addAttribute("files", files);
+            model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+            model.addAttribute("selectedFolder", selectedFolder);
             model.addAttribute("stylePrompt", stylePrompt);
             return "document_list";
         }
 
         List<byte[]> pdfBytesList = new ArrayList<>();
         List<String> names = new ArrayList<>();
+        List<String> textList = new ArrayList<>();
 
         for (DocumentFile file : files) {
             try {
-                Path path = Paths.get(System.getProperty("user.dir"), "uploads", file.getStoredFilename());
-                byte[] bytes = Files.readAllBytes(path);
-
-                pdfBytesList.add(bytes);
-                names.add(file.getOriginalFilename());
+                String extracted = file.getExtractedText();
+                if (extracted == null || extracted.isBlank()) {
+                    Path path = Paths.get(System.getProperty("user.dir"), "uploads", file.getStoredFilename());
+                    extracted = documentService.extractText(path);
+                }
+                if (extracted != null && !extracted.isBlank()) {
+                    textList.add(extracted);
+                    names.add(file.getOriginalFilename());
+                }
             } catch (Exception e) {
-                model.addAttribute("error", "PDF 읽기 오류: " + file.getOriginalFilename() + " - " + e.getMessage());
+                model.addAttribute("error", "텍스트 읽기 오류: " + file.getOriginalFilename() + " - " + e.getMessage());
                 model.addAttribute("errorFileId", file.getId());
                 model.addAttribute("errorFileName", file.getOriginalFilename());
                 model.addAttribute("files", files);
+                model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+                model.addAttribute("selectedFolder", selectedFolder);
                 model.addAttribute("stylePrompt", stylePrompt);
                 return "document_list";
             }
         }
 
-        // 1) Gemini에게 여러 PDF를 보내서 "문제 텍스트" 생성
+        if (textList.isEmpty()) {
+            model.addAttribute("error", "PDF 텍스트가 비어 있어 문제를 만들 수 없습니다.");
+            model.addAttribute("files", files);
+            model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+            model.addAttribute("selectedFolder", selectedFolder);
+            model.addAttribute("stylePrompt", stylePrompt);
+            return "document_list";
+        }
+
+        // 1) Gemini에게 저장된 텍스트를 보내서 "문제 텍스트" 생성
         String rawQuestions =
-                geminiQuestionService.generateQuestionsFromMultiplePdfs(pdfBytesList, names, stylePrompt);
+                geminiQuestionService.generateQuestionsFromTexts(textList, names, stylePrompt);
 
         // 2) 그 텍스트를 파싱해서 QuizQuestion 엔티티로 저장
         List<QuizQuestion> savedQuestions =
-                quizService.saveFromRawText(rawQuestions, user, files);
+                quizService.saveFromRawText(rawQuestions, user, files, selectedFolder);
 
         // 3) 결과 화면으로 전달
         model.addAttribute("originalName", "총 " + names.size() + "개 문서");
         model.addAttribute("questionsRaw", rawQuestions);
         model.addAttribute("savedCount", savedQuestions.size());
         model.addAttribute("stylePrompt", stylePrompt);
+        model.addAttribute("selectedFolder", selectedFolder);
 
         return "document_makeprob_result";
     }
@@ -241,6 +300,7 @@ public class UploadController {
     @PostMapping("/force-delete/{id}")
     @Transactional
     public String forceDeleteDocument(@PathVariable Long id,
+                                      @RequestParam(value = "folderId", required = false) Long folderId,
                                       Principal principal,
                                       RedirectAttributes rttr) {
 
@@ -273,6 +333,7 @@ public class UploadController {
             e.printStackTrace();
         }
 
-        return "redirect:/document/list";
+        String suffix = (file.getFolder() != null) ? "?folderId=" + file.getFolder().getId() : "";
+        return "redirect:/document/list" + suffix;
     }
 }

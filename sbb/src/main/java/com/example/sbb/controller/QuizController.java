@@ -1,9 +1,11 @@
 package com.example.sbb.controller;
 
+import com.example.sbb.domain.Folder;
 import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
 import com.example.sbb.repository.QuizQuestionRepository;
+import com.example.sbb.repository.FolderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,21 +29,29 @@ public class QuizController {
 
     private final QuizQuestionRepository quizQuestionRepository;
     private final UserService userService;
+    private final FolderRepository folderRepository;
 
     // 전체 퀴즈 목록(간단히)
   @GetMapping("/list")
 public String list(Model model,
                    Principal principal,
-                   @RequestParam(value = "page", defaultValue = "0") int page) {
+                   @RequestParam(value = "page", defaultValue = "0") int page,
+                   @RequestParam(value = "folderId", required = false) Long folderId) {
     if (principal == null) return "redirect:/login";
 
     // TODO: JPA 로직 전부 잠시 주석 처리
     
     SiteUser user = userService.getUser(principal.getName());
+    Folder folder = null;
+    if (folderId != null) {
+        folder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+    }
 
     int pageIndex = Math.max(page, 0);
         Pageable pageable = PageRequest.of(pageIndex, 10, Sort.by("createdAt").ascending());
-        Page<QuizQuestion> pageData = quizQuestionRepository.findByUserOrderByCreatedAtAsc(user, pageable);
+        Page<QuizQuestion> pageData = (folder != null)
+                ? quizQuestionRepository.findByUserAndFolderOrderByCreatedAtAsc(user, folder, pageable)
+                : quizQuestionRepository.findByUserOrderByCreatedAtAsc(user, pageable);
 
     int totalPages = pageData.getTotalPages() == 0 ? 1 : pageData.getTotalPages();
 
@@ -51,6 +61,14 @@ public String list(Model model,
     model.addAttribute("hasPrevious", pageData.hasPrevious());
     model.addAttribute("hasNext", pageData.hasNext());
     model.addAttribute("totalElements", pageData.getTotalElements());
+    model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+    model.addAttribute("selectedFolder", folder);
+    if (!pageData.isEmpty() && pageData.getContent().get(0).isMultipleChoice()) {
+        model.addAttribute("firstChoiceList", extractChoices(pageData.getContent().get(0).getChoices()));
+    }
+    String folderQuery = (folder != null) ? "?folderId=" + folder.getId() : "";
+    model.addAttribute("folderQuery", folderQuery);
+    model.addAttribute("folderQueryAmp", folder != null ? "&folderId=" + folder.getId() : "");
     
 
     return "quiz_list";
@@ -59,36 +77,57 @@ public String list(Model model,
 
     @GetMapping("/next")
     public String goToNext(Principal principal,
+                           @RequestParam(value = "folderId", required = false) Long folderId,
                            RedirectAttributes rttr) {
         if (principal == null) return "redirect:/login";
 
         SiteUser user = userService.getUser(principal.getName());
-        QuizQuestion next = findNextPendingQuestion(user);
+        Folder folder = null;
+        if (folderId != null) {
+            folder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+        }
+        QuizQuestion next = findNextPendingQuestion(user, folder);
 
         if (next == null) {
             rttr.addFlashAttribute("message", "풀 문제를 모두 완료했습니다.");
-            return "redirect:/quiz/list";
+            String suffix = (folder != null) ? "?folderId=" + folder.getId() : "";
+            return "redirect:/quiz/list" + suffix;
         }
-        return "redirect:/quiz/solve/" + next.getId();
+        String suffix = (folder != null) ? "?folderId=" + folder.getId() : "";
+        return "redirect:/quiz/solve/" + next.getId() + suffix;
     }
 
     // 문제 풀기 화면
     @GetMapping("/solve/{id}")
     public String showQuiz(@PathVariable Long id,
+                           @RequestParam(value = "folderId", required = false) Long folderId,
                            Principal principal,
-                           Model model) {
+                           Model model,
+                           RedirectAttributes rttr) {
         if (principal == null) return "redirect:/login";
 
         SiteUser user = userService.getUser(principal.getName());
-        QuizQuestion q = quizQuestionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("문제를 찾을 수 없습니다."));
+        QuizQuestion q = quizQuestionRepository.findById(id).orElse(null);
 
-        if (!q.getUser().getId().equals(user.getId())) {
-            return "redirect:/quiz/list";
+        Folder folder = null;
+        if (folderId != null) {
+            folder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+        }
+        if (folder == null) {
+            folder = (q != null) ? q.getFolder() : null;
+        }
+
+        if (q == null || !q.getUser().getId().equals(user.getId())) {
+            rttr.addFlashAttribute("message", "문제를 찾을 수 없습니다.");
+            String suffix = buildFolderSuffix(folder);
+            return "redirect:/quiz/list" + suffix;
         }
 
         model.addAttribute("question", q);
+        model.addAttribute("selectedFolder", folder);
+        model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
         model.addAttribute("choiceList", extractChoices(q.getChoices()));
+        model.addAttribute("questionList", loadQuestionList(user, folder));
         return "quiz_solve";
     }
 
@@ -96,16 +135,27 @@ public String list(Model model,
     @PostMapping("/solve/{id}")
     public String submitQuiz(@PathVariable Long id,
                              @RequestParam("answer") String userAnswer,
+                             @RequestParam(value = "folderId", required = false) Long folderId,
                              Principal principal,
-                             Model model) {
+                             Model model,
+                             RedirectAttributes rttr) {
         if (principal == null) return "redirect:/login";
 
         SiteUser user = userService.getUser(principal.getName());
-        QuizQuestion q = quizQuestionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("문제를 찾을 수 없습니다."));
+        QuizQuestion q = quizQuestionRepository.findById(id).orElse(null);
 
-        if (!q.getUser().getId().equals(user.getId())) {
-            return "redirect:/quiz/list";
+        Folder folder = null;
+        if (folderId != null) {
+            folder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+        }
+        if (folder == null) {
+            folder = (q != null) ? q.getFolder() : null;
+        }
+
+        if (q == null || !q.getUser().getId().equals(user.getId())) {
+            rttr.addFlashAttribute("message", "문제를 찾을 수 없습니다.");
+            String suffix = buildFolderSuffix(folder);
+            return "redirect:/quiz/list" + suffix;
         }
 
         String normalizedUser = normalizeAnswerText(userAnswer);
@@ -124,8 +174,11 @@ public String list(Model model,
         model.addAttribute("choiceList", extractChoices(q.getChoices()));
         model.addAttribute("normalizedCorrectAnswer", normalizedCorrect);
         model.addAttribute("normalizedUserAnswer", normalizedUser);
+        model.addAttribute("selectedFolder", folder);
+        model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+        model.addAttribute("questionList", loadQuestionList(user, folder));
 
-        QuizQuestion next = findNextPendingQuestion(user);
+        QuizQuestion next = findNextPendingQuestion(user, folder);
         if (next != null) {
             model.addAttribute("nextQuestionId", next.getId());
         }
@@ -162,12 +215,24 @@ public String list(Model model,
         return result;
     }
 
-    private QuizQuestion findNextPendingQuestion(SiteUser user) {
-        return quizQuestionRepository
-                .findByUserAndSolvedFalseOrderByCreatedAtAsc(user)
-                .stream()
+    private QuizQuestion findNextPendingQuestion(SiteUser user, Folder folder) {
+        List<QuizQuestion> targetList = (folder != null)
+                ? quizQuestionRepository.findByUserAndFolderAndSolvedFalseOrderByCreatedAtAsc(user, folder)
+                : quizQuestionRepository.findByUserAndSolvedFalseOrderByCreatedAtAsc(user);
+
+        return targetList.stream()
                 .findFirst()
                 .orElse(null);
+    }
+
+    private List<QuizQuestion> loadQuestionList(SiteUser user, Folder folder) {
+        return (folder != null)
+                ? quizQuestionRepository.findByUserAndFolderOrderByCreatedAtAsc(user, folder)
+                : quizQuestionRepository.findByUserOrderByCreatedAtAsc(user);
+    }
+
+    private String buildFolderSuffix(Folder folder) {
+        return (folder != null && folder.getId() != null) ? "?folderId=" + folder.getId() : "";
     }
 
     private static final Pattern NORMALIZE_PATTERN = Pattern.compile("[^A-Za-z0-9가-힣]");
