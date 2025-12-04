@@ -1,0 +1,68 @@
+<!-- templates/navbar.html -->
+<nav class="navbar" th:fragment="nav">
+  <div class="navbar-inner">
+    <a class="brand" href="/">Intuitive</a>
+
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/folders">My Folders</a></li>
+      <li><a href="/quiz/list">My Questions</a></li>
+      <li><a href="/groups">Study Groups</a></li>
+      
+    </ul>
+
+    <!-- 우측 로그인/상태 -->
+    <div class="user-status">
+      <div class="notif-wrapper" th:if="${#authorization.expression('isAuthenticated()')}">
+        <button type="button" class="icon-button" id="notificationBell">
+          <span class="bell-icon" aria-hidden="true">🔔</span>
+          <span class="badge" id="notificationBadge" style="display:none;">0</span>
+        </button>
+        <div class="notification-panel" id="notificationPanel">
+          <div class="notification-header">알림</div>
+          <div class="notification-list" id="notificationList">
+            <div class="notification-empty">새 알림이 없습니다.</div>
+          </div>
+        </div>
+        <button type="button" class="icon-button" id="friendBell" title="친구 추가" style="margin-left:6px;">
+          <span aria-hidden="true">➕</span>
+          <span class="badge" id="friendBadge" style="display:none;">0</span>
+        </button>
+        <div class="notification-panel" id="friendPanel">
+          <div class="notification-header">친구 추가</div>
+          <form id="friendAddForm" style="padding:10px; display:flex; gap:8px; align-items:center;">
+            <input type="hidden" id="friendCsrfParam" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" id="friendCsrfHeader" th:value="${_csrf.headerName}">
+            <input type="text" name="username" placeholder="아이디 검색" style="flex:1; padding:8px 10px; border:1px solid #d1d5db; border-radius:8px;">
+            <button type="submit" class="btn btn-outline" style="padding:6px 10px;">추가</button>
+          </form>
+          <div id="friendRequestList" class="notification-list"></div>
+        </div>
+      </div>
+      <div class="profile-wrapper" th:if="${#authorization.expression('isAuthenticated()')}">
+        <button type="button" class="icon-button" id="profileButton">
+          <span class="profile-icon" aria-hidden="true">👤</span>
+        </button>
+        <div class="profile-panel" id="profilePanel">
+          <div class="profile-header">
+            <div class="avatar">🧑</div>
+            <div>
+              <div class="profile-name" th:text="${#authentication.name}">사용자</div>
+              <div class="profile-sub">내 계정</div>
+            </div>
+          </div>
+          <div class="profile-list">
+            <a href="/quiz/list" class="profile-item">내 문제 보기</a>
+            <a href="/groups" class="profile-item">내 그룹 보기</a>
+            <a href="/folders" class="profile-item">내 폴더</a>
+            <a href="/profile" class="profile-item">친구/프로필</a>
+            <a href="/logout" class="profile-item">로그아웃</a>
+          </div>
+        </div>
+      </div>
+      <span th:if="${#authorization.expression('!isAuthenticated()')}">
+        <a href="/login">로그인</a> | <a href="/signup">회원가입</a>
+      </span>
+    </div>
+  </div>
+</nav>

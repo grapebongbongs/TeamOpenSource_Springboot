@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko"
+      th:replace="layout :: layout(~{::body})">
+<body>
+<div>
+
+    <h1 class="page-title">내 폴더</h1>
+    <p style="margin-top:-6px; margin-bottom:14px; color:#6b7280; font-size:14px;">
+        과목별로 폴더를 만들어 PDF와 문제를 정리하세요.
+    </p>
+
+    <div th:if="${error}" class="alert alert-danger" style="margin-bottom:12px;">
+        <span th:text="${error}"></span>
+    </div>
+
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+        gap:14px;
+    ">
+        <div th:each="folder : ${folders}"
+             class="folder-card"
+             th:data-link="@{/document/list(folderId=${folder.id})}"
+             style="text-decoration:none; cursor:pointer;">
+            <div class="card" style="height:140px; border:1px dashed #d1d5db; display:flex; flex-direction:column; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; color:#111827;"
+                         th:text="${folder.name}">폴더</div>
+                    <span style="font-size:12px; color:#9ca3af;"
+                          th:text="${#temporals.format(folder.createdAt, 'yyyy.MM.dd')}">날짜</span>
+                </div>
+                <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">
+                    클릭해서 PDF와 문제 보기
+                </p>
+                <form th:action="@{/folders/delete}" method="post" style="margin-top:8px; display:flex; justify-content:flex-end; gap:6px;"
+                      onsubmit="return confirm('폴더 안의 PDF와 문제를 모두 삭제할까요?');">
+                    <input type="hidden" name="folderId" th:value="${folder.id}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-outline" style="padding:6px 10px;">🗑 삭제</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="
+            height:140px;
+            border:2px dashed rgba(107,114,128,0.4);
+            background:rgba(249,250,251,0.7);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        ">
+            <form th:action="@{/folders}" method="post" style="width:100%;">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}">
+                <label for="newFolderName" style="display:block; text-align:center; color:#6b7280; font-size:13px; margin-bottom:8px;">
+                    새 폴더 추가하기
+                </label>
+                <div style="display:flex; gap:8px; padding:0 8px;">
+                    <input id="newFolderName"
+                           type="text"
+                           name="name"
+                           placeholder="예: 알고리즘, 네트워크"
+                           style="flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;">
+                    <button type="submit"
+                            class="btn"
+                            style="padding:0 14px; font-size:18px; width:46px;">
+                        +
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.folder-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('form')) return;
+                const link = card.dataset.link;
+                if (link) window.location.href = link;
+            });
+        });
+    });
+</script>
+</body>
+</html>

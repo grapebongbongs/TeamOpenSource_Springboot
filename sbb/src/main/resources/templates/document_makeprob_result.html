@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko"
+      th:replace="layout :: layout(~{::body})">
+
+<body>
+<div>
+
+    <h1 class="page-title">문제 생성 결과</h1>
+
+    <div class="card" th:if="${savedCount != null}">
+        <p>
+            <strong th:text="${originalName}">문서</strong> 를 기반으로
+            <strong th:text="${savedCount}">10</strong>개의 문제가 생성되어 저장되었습니다.
+        </p>
+        <p th:if="${selectedFolder != null}" style="margin:6px 0; font-size:13px; color:#4b5563;">
+            폴더: <strong th:text="${selectedFolder.name}"></strong>
+        </p>
+        <p style="font-size:14px; color:#6b7280; margin-top:6px;">
+            이제 알림 기능을 통해 하루 2문제씩 받아보거나,
+            퀴즈 풀이 페이지에서 바로 풀 수 있습니다.
+        </p>
+    </div>
+
+    <div class="card" th:if="${savedCount == null}">
+        <p style="margin:0;">
+            생성 결과를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </p>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px;">
+        <a th:href="${selectedFolder != null} ? @{/document/list(folderId=${selectedFolder.id})} : '/document/list'"
+           class="btn btn-outline">📄 내 PDF 목록으로 돌아가기</a>
+        <a th:href="${selectedFolder != null} ? @{/quiz/list(folderId=${selectedFolder.id})} : '/quiz/list'"
+           class="btn">📝 저장된 퀴즈 보러 가기</a>
+    </div>
+
+</div>
+</body>
+</html>

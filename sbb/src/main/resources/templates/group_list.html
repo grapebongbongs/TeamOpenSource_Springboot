@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="layout :: layout(~{::body})">
+<body>
+<div>
+    <h1 class="page-title">스터디 그룹</h1>
+
+    <div th:if="${message}" class="alert alert-success" style="margin-bottom:12px;">
+        <span th:text="${message}"></span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger" style="margin-bottom:12px;">
+        <span th:text="${error}"></span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-bottom:12px;">
+        <div class="card" style="border:1px dashed #d1d5db; height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+                <div style="font-weight:700;">새 그룹 만들기</div>
+                <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">그룹명을 입력하고 +를 눌러 생성하세요.</p>
+            </div>
+            <form th:action="@{/groups}" method="post" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="text" name="name" placeholder="예: 알고리즘 스터디" required
+                       style="flex:1; padding:8px 10px; border:1px solid #d1d5db; border-radius:10px;">
+                <button type="submit" class="btn" style="padding:0 14px; width:46px;">+</button>
+            </form>
+        </div>
+
+        <div class="card" style="border:1px dashed #d1d5db; height:170px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+                <div style="font-weight:700;">코드로 참여</div>
+                <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">초대 코드를 입력해 가입하세요.</p>
+            </div>
+            <form th:action="@{/groups/join}" method="post" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="text" name="code" placeholder="초대 코드" required
+                       style="flex:1; padding:8px 10px; border:1px solid #d1d5db; border-radius:10px;">
+                <button type="submit" class="btn btn-outline" style="padding:0 14px; width:46px;">→</button>
+            </form>
+        </div>
+
+    </div>
+
+    <h3 style="margin:6px 0 10px;">내 그룹</h3>
+    <div th:if="${#lists.isEmpty(memberships)}" style="color:#6b7280;">아직 참여한 그룹이 없습니다.</div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px;">
+        <div th:each="mem : ${memberships}"
+             class="group-card"
+             th:data-link="@{/groups/{id}(id=${mem.group.id})}"
+             style="text-decoration:none; cursor:pointer;">
+            <div class="card" style="height:170px; display:flex; flex-direction:column; justify-content:space-between; border:1px solid #e5e7eb;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-weight:700; color:#111827;"
+                         th:text="${mem.group.name}">그룹</div>
+                    <span class="join-code" style="font-size:12px; color:#9ca3af; visibility:hidden;"
+                          th:text="${mem.group.joinCode}">코드</span>
+                </div>
+                <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">
+                    클릭해서 그룹 문제 보기
+                </p>
+                <span class="pill pill-muted" style="width:max-content;">ROLE: <span th:text="${mem.role}">MEMBER</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${group != null}" class="card" style="margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div>
+                <h3 style="margin:0;" th:text="${group.name}">그룹 상세</h3>
+                <p style="margin:2px 0 0; color:#6b7280;">참여 코드: <span style="visibility:hidden;" class="join-code" th:text="${group.joinCode}"></span></p>
+            </div>
+        </div>
+
+        <div style="margin-top:12px;">
+            <h4 style="margin:0 0 8px;">공유된 문제</h4>
+            <div th:if="${#lists.isEmpty(sharedQuestions)}" style="color:#6b7280;">아직 공유된 문제가 없습니다.</div>
+            <div th:each="item : ${sharedQuestions}"
+                 style="padding:10px; border:1px solid #e5e7eb; border-radius:10px; margin-bottom:8px;">
+                <div style="font-weight:600;" th:text="${item.question.questionText}">문제</div>
+                <div style="color:#6b7280; font-size:13px; margin-top:4px;">
+                    공유자: <span th:text="${item.sharedBy.username}"></span>
+                    · <span th:text="${#temporals.format(item.sharedAt, 'yyyy.MM.dd HH:mm')}"></span>
+                </div>
+                <form th:action="@{/groups/use-shared/{id}(id=${item.id})}" method="post" style="margin-top:8px;" class="copy-once-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn btn-outline copy-once-btn" style="padding:6px 10px;">내 문제로 복사하기</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:12px; border:1px dashed #d1d5db;">
+            <h4 style="margin:0 0 8px;">멤버 관리 (그룹장 전용 UI)</h4>
+            <p style="margin:0 0 8px; color:#6b7280; font-size:13px;">멤버 리스트와 초대/추방 기능은 배포 후 활성화됩니다.</p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px;">
+                    <strong>멤버 목록</strong>
+                    <ul style="margin:6px 0 0; padding-left:16px; color:#6b7280; font-size:13px;">
+                        <li>멤버1 (OWNER)</li>
+                        <li>멤버2 (MEMBER)</li>
+                    </ul>
+                </div>
+                <div style="flex:1; min-width:200px;">
+                    <strong>친구 초대</strong>
+                    <div style="margin-top:6px; display:flex; flex-direction:column; gap:6px;">
+                        <label th:each="fr : ${friends}" style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" disabled>
+                            <span th:text="${fr.to.username}">friend</span>
+                            <span style="color:#9ca3af; font-size:12px;">초대 준비</span>
+                        </label>
+                        <button type="button" class="btn btn-outline" style="padding:6px 12px;" disabled>초대 보내기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.group-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const link = card.dataset.link;
+                if (link) window.location.href = link;
+            });
+        });
+        document.querySelectorAll('.copy-once-form').forEach(form => {
+            form.addEventListener('submit', () => {
+                const btn = form.querySelector('.copy-once-btn');
+                if (btn) {
+                    btn.textContent = '복사 완료';
+                    btn.disabled = true;
+                }
+            });
+        });
+        document.querySelectorAll('.join-code').forEach(code => {
+            const parent = code.closest('.group-card');
+            const parent2 = code.closest('.card');
+            const target = parent || parent2;
+            if (target) {
+                target.addEventListener('mouseenter', () => code.style.visibility = 'visible');
+                target.addEventListener('mouseleave', () => code.style.visibility = 'hidden');
+            }
+        });
+    });
+</script>
+</body>
+</html>

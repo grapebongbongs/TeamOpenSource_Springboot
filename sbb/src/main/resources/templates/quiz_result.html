@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko"
+      th:replace="layout :: layout(~{::body})">
+<body>
+<style>
+    .question-sheet {
+        position:fixed;
+        right:0;
+        top:0;
+        height:100vh;
+        width:360px;
+        max-width:90vw;
+        background:#fff;
+        box-shadow:-8px 0 30px rgba(0,0,0,0.18);
+        transform:translateX(100%);
+        transition:transform 0.25s ease;
+        z-index:95;
+        display:flex;
+        flex-direction:column;
+    }
+    .question-sheet.open { transform:translateX(0); }
+    .question-sheet__header {
+        padding:16px 18px;
+        border-bottom:1px solid #e5e7eb;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+    }
+    .question-sheet__body {
+        padding:16px 18px;
+        overflow:auto;
+        flex:1;
+    }
+    .question-sheet__card {
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        padding:10px 12px;
+        margin-bottom:10px;
+        cursor:pointer;
+        transition:border-color 0.2s ease;
+    }
+    .question-sheet__card:hover { border-color:#111827; }
+    .sheet-toggle-btn {
+        position:fixed;
+        right:18px;
+        bottom:18px;
+        z-index:96;
+        border:none;
+        border-radius:999px;
+        background:#111827;
+        color:#fff;
+        padding:12px 16px;
+        font-weight:700;
+        box-shadow:0 10px 30px rgba(0,0,0,0.25);
+        cursor:pointer;
+    }
+    @media(max-width:768px){
+        .question-sheet { width:100%; }
+    }
+</style>
+<div>
+
+    <h1 class="page-title">풀이 결과</h1>
+
+    <div class="card" th:if="${question != null}">
+        <div class="question-header-banner">
+            <div class="question-number-box"
+                 th:classappend="${ans} ? ' success' : ' danger'">
+                <span th:text="'문제 ' + ${question.numberTag}">문제 1</span>
+            </div>
+            <span th:if="${correct}" class="question-tag success">정답! 🎉</span>
+            <span th:if="${!correct}" class="question-tag danger">틀렸어요</span>
+        </div>
+
+        <p style="font-size:17px; font-weight:600; margin-top:12px; white-space:pre-wrap;"
+           th:text="${question.questionText}">문제 내용</p>
+
+        <div class="result-message success" th:if="${correct}">
+            멋져요! 정확하게 맞췄어요. 다음 문제도 화이팅!
+        </div>
+        <div class="result-message danger" th:if="${!correct}">
+            아쉬워요. 아래에서 정답을 확인하고 다시 도전해보세요.
+        </div>
+
+        <div th:if="${choiceList != null && !#lists.isEmpty(choiceList)}"
+             class="choice-display">
+            <div class="choice-display-row"
+                 th:each="choice : ${choiceList}"
+                 th:classappend="${choice.normalizedValue == normalizedCorrectAnswer} ? ' correct' : (choice.normalizedValue == normalizedUserAnswer ? ' wrong' : '')">
+                <span class="choice-index"
+                      th:text="${choice.number != null ? choice.number + '.' : ''}"></span>
+                <span class="choice-text"
+                      th:text="${choice.text}"></span>
+            </div>
+        </div>
+
+        <p style="font-size:13px; color:#6b7280; margin-top:12px; white-space:pre-wrap;">
+            <strong>해설:</strong>
+            <span th:text="${question.explanation}"></span>
+        </p>
+    </div>
+
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <a th:href="${selectedFolder != null} ? @{/quiz/list(folderId=${selectedFolder.id})} : '/quiz/list'"
+           class="btn btn-outline">문제 목록 보기</a>
+        <a th:if="${nextQuestionId != null}"
+           th:href="@{'/quiz/solve/' + ${nextQuestionId} + (selectedFolder != null ? '?folderId=' + ${selectedFolder.id} : '')}"
+           class="btn">
+            다음 문제 풀기 →
+        </a>
+        <span th:if="${nextQuestionId == null}"
+              class="pill pill-muted">
+            모든 문제를 풀었습니다!
+        </span>
+    </div>
+
+    <button type="button"
+            class="sheet-toggle-btn"
+            id="questionSheetToggle">
+        문제 목록
+    </button>
+
+    <div class="question-sheet" id="questionSheet">
+        <div class="question-sheet__header">
+            <div>
+                <strong>전체 문제</strong>
+                <p style="margin:4px 0 0; font-size:13px; color:#6b7280;">
+                    총 <span th:text="${#lists.size(questionList)}">0</span>개
+                </p>
+            </div>
+            <button type="button" class="btn btn-outline" id="closeSheetBtn" style="padding:6px 12px;">닫기</button>
+        </div>
+        <div class="question-sheet__body">
+            <div th:if="${#lists.isEmpty(questionList)}"
+                 style="text-align:center; color:#9ca3af;">
+                아직 문제가 없습니다.
+            </div>
+            <div th:each="item : ${questionList}"
+                 class="question-sheet__card"
+                 th:data-link="${selectedFolder != null} ? @{/quiz/solve/{id}(id=${item.id}, folderId=${selectedFolder.id})} : @{/quiz/solve/{id}(id=${item.id})}">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong th:text="'문제 ' + ${item.numberTag}">문제</strong>
+                    <span style="font-size:12px; color:#6b7280;"
+                          th:text="${item.createdAtFormatted}"></span>
+                </div>
+                <p style="margin:6px 0 0; font-size:13px; color:#4b5563; white-space:pre-wrap;"
+                   th:text="${item.questionText}"></p>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sheet = document.getElementById('questionSheet');
+        const toggle = document.getElementById('questionSheetToggle');
+        const closeBtn = document.getElementById('closeSheetBtn');
+        if (sheet && toggle) {
+            const toggleSheet = () => sheet.classList.toggle('open');
+            toggle.addEventListener('click', toggleSheet);
+            if (closeBtn) closeBtn.addEventListener('click', toggleSheet);
+        }
+
+        document.querySelectorAll('.question-sheet__card').forEach(card => {
+            card.addEventListener('click', () => {
+                const link = card.dataset.link;
+                if (link) window.location.href = link;
+            });
+        });
+    });
+</script>
+</body>
+</html>
