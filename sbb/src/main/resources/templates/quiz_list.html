@@ -254,10 +254,27 @@
         .question-sheet {
             width:100%;
         }
+        .check-panel {
+            flex-direction:column;
+            align-items:stretch;
+        }
+        .choice-chip {
+            width:100%;
+        }
+        .filter-tabs {
+            gap:6px;
+        }
+        .filter-btn {
+            flex:1 1 auto;
+            text-align:center;
+        }
+        .card {
+            padding:14px;
+        }
     }
 </style>
 
-<div th:with="firstQuestion=${#lists.isEmpty(questions) ? null : questions[0]}">
+<div th:with="firstQuestion=${#lists.isEmpty(questions) ? null : questions[0]}" style="padding-bottom:120px;">
 
     <h1 class="page-title">My Questions</h1>
     <div class="filter-tabs">
@@ -269,25 +286,25 @@
     <div id="filterEmptyMessage" style="display:none; margin-bottom:12px; color:#6b7280; font-weight:600;">
         조건에 맞는 문제가 없습니다.
     </div>
-    <div id="bookmarkListContainer" class="card" style="display:none; padding:12px; margin-bottom:14px;">
-        <h3 style="margin:0 0 8px;">북마크 목록</h3>
-        <div id="bookmarkList" style="display:flex; flex-direction:column; gap:8px;"></div>
-    </div>
-    <div id="correctListContainer" class="card" style="display:none; padding:12px; margin-bottom:14px;">
-        <h3 style="margin:0 0 8px;">맞은 문제</h3>
-        <div id="correctList" style="display:flex; flex-direction:column; gap:8px;"></div>
-    </div>
-    <div id="wrongListContainer" class="card" style="display:none; padding:12px; margin-bottom:14px;">
-        <h3 style="margin:0 0 8px;">틀린 문제</h3>
-        <div id="wrongList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="filterLists" style="display:none; margin-bottom:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <div id="correctListContainer" class="card" style="flex:1 1 260px; display:none; padding:10px;">
+            <div style="font-weight:700; margin-bottom:6px;">맞은 문제</div>
+            <div id="correctList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
+        <div id="wrongListContainer" class="card" style="flex:1 1 260px; display:none; padding:10px;">
+            <div style="font-weight:700; margin-bottom:6px;">틀린 문제</div>
+            <div id="wrongList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
+        <div id="bookmarkListContainer" class="card" style="flex:1 1 260px; display:none; padding:10px;">
+            <div style="font-weight:700; margin-bottom:6px;">북마크</div>
+            <div id="bookmarkList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
     </div>
     <div class="card" style="margin-bottom:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         <form th:action="@{/quiz/list}" method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <select id="quizFolderSelect"
                     name="folderId"
-                    onchange="this.form.submit()"
                     style="min-width:200px; padding:8px 10px; border-radius:8px; border:1px solid #d1d5db;">
-                <option value="" disabled th:selected="${selectedFolder == null}">폴더를 선택하세요</option>
                 <option th:each="folder : ${folders}"
                         th:value="${folder.id}"
                         th:text="${folder.name}"
@@ -366,15 +383,9 @@
             </button>
             <button type="button"
                     class="btn btn-outline"
-                    id="openDiscussionButton"
-                    style="flex:0 0 auto;">
-                토론
-            </button>
-            <button type="button"
-                    class="btn btn-outline"
                     id="openShareButton"
                     style="flex:0 0 auto;">
-                친구와 함께 풀기
+                친구에게 공유하기
             </button>
         </div>
 
@@ -391,7 +402,7 @@
                     th:onchange="this.form.action='/groups/' + this.value + '/share/' + this.form.querySelector('[name=questionId]').value;">
                 <option th:each="mem : ${memberships}"
                         th:value="${mem.group.id}"
-                        th:text="${mem.group.name} + ' (' + mem.group.joinCode + ')'">
+                        th:text="${mem.group.name}">
                 </option>
             </select>
             <input type="hidden" name="questionId" th:value="${firstQuestion != null ? firstQuestion.id : 0}">
@@ -469,22 +480,6 @@
         </div>
     </div>
 
-    <!-- 토론 모달 -->
-    <div class="discussion-modal" id="discussionModal">
-        <div class="discussion-card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-weight:700;">문제 토론</div>
-                <button type="button" class="btn btn-outline" id="closeDiscussionButton" style="padding:6px 12px;">닫기</button>
-            </div>
-            <div id="discussionQuestionTitle" style="color:#6b7280; font-size:13px;"></div>
-            <div class="discussion-list" id="discussionList"></div>
-            <form id="discussionForm" style="display:flex; gap:8px; align-items:flex-start;">
-                <textarea id="discussionInput" rows="2" style="flex:1; padding:10px; border:1px solid #d1d5db; border-radius:10px; resize:vertical;" placeholder="댓글을 입력하세요"></textarea>
-                <button type="submit" class="btn" style="padding:10px 14px;">등록</button>
-            </form>
-        </div>
-    </div>
-
     <!-- 함께 풀기 모달 -->
     <div class="share-modal" id="shareModal">
         <div class="share-card">
@@ -559,6 +554,18 @@
             localStorage.setItem('quizBookmarks', JSON.stringify(Array.from(set)));
         };
         const bookmarkSet = loadBookmarks();
+        const loadSolvedDates = () => {
+            try { return new Set(JSON.parse(localStorage.getItem('solveDates') || '[]')); }
+            catch(e){ return new Set(); }
+        };
+        const solvedDates = loadSolvedDates();
+        const saveSolvedDates = () => {
+            localStorage.setItem('solveDates', JSON.stringify(Array.from(solvedDates)));
+        };
+        const solvedState = (() => {
+            try { return JSON.parse(localStorage.getItem('quizSolvedState') || '{}'); }
+            catch(e){ return {}; }
+        })();
 
         const allQuestions = [];
         const cardIdToIndex = new Map();
@@ -574,7 +581,7 @@
                 answer: card.dataset.answer || '',
                 multipleChoice: card.dataset.multipleChoice === 'true',
                 choices: parseChoices(card.dataset.choices || ''),
-                correctState: card.dataset.correctState || 'pending',
+                correctState: solvedState[id] || card.dataset.correctState || 'pending',
                 bookmarked,
                 folderId: card.dataset.folderId || ''
             });
@@ -597,6 +604,7 @@
         const bookmarkIcon = bookmarkButton ? bookmarkButton.querySelector('.bookmark-icon') : null;
         const filterButtons = Array.from(document.querySelectorAll('.filter-btn'));
         const filterEmpty = document.getElementById('filterEmptyMessage');
+        const filterLists = document.getElementById('filterLists');
         const bookmarkListContainer = document.getElementById('bookmarkListContainer');
         const bookmarkList = document.getElementById('bookmarkList');
         const correctListContainer = document.getElementById('correctListContainer');
@@ -605,18 +613,19 @@
         const wrongList = document.getElementById('wrongList');
         const csrfToken = document.querySelector('meta[name=\"_csrf\"]')?.content || '';
         const csrfHeader = document.querySelector('meta[name=\"_csrf_header\"]')?.content || 'X-CSRF-TOKEN';
-        const discussionModal = document.getElementById('discussionModal');
-        const openDiscussionButton = document.getElementById('openDiscussionButton');
-        const closeDiscussionButton = document.getElementById('closeDiscussionButton');
-        const discussionList = document.getElementById('discussionList');
-        const discussionTitle = document.getElementById('discussionQuestionTitle');
-        const discussionForm = document.getElementById('discussionForm');
-        const discussionInput = document.getElementById('discussionInput');
         const shareModal = document.getElementById('shareModal');
         const openShareButton = document.getElementById('openShareButton');
         const closeShareButton = document.getElementById('closeShareButton');
         const sendShareButton = document.getElementById('sendShareButton');
         const shareFriendList = document.getElementById('shareFriendList');
+        const formatDateTime = (value) => {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toLocaleString();
+        };
+
+        // (My Questions에서는 토론 기능 제거)
 
         let currentIndex = 0;
         let selectedValue = '';
@@ -632,12 +641,24 @@
                 });
             });
         };
+        if (choiceContainer) {
+            choiceContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-role="choice-option"]');
+                if (!target) return;
+                choiceContainer.querySelectorAll('[data-role="choice-option"]').forEach(b => b.classList.remove('selected', 'wrong'));
+                target.classList.add('selected');
+                selectedValue = target.dataset.value || '';
+            });
+        }
 
         const renderQuestion = (idx) => {
             if (!highlightContainer || !filteredQuestions[idx]) return;
             const q = filteredQuestions[idx];
             currentIndex = idx;
             selectedValue = '';
+            [checkBtn, nextBtn, openShareButton, bookmarkButton].forEach(btn => {
+                if (btn) btn.disabled = false;
+            });
 
             if (numberLabel) numberLabel.textContent = q.number ? `문제 ${q.number}` : `문제 ${idx + 1}`;
             if (dateLabel) dateLabel.textContent = q.date || '';
@@ -747,8 +768,13 @@
                         card.classList.remove('pending', 'correct', 'wrong');
                         card.classList.add(isCorrect ? 'correct' : 'wrong');
                     }
+                    solvedState[q.id] = isCorrect ? 'correct' : 'wrong';
+                    localStorage.setItem('quizSolvedState', JSON.stringify(solvedState));
+                    const todayKey = new Date().toISOString().slice(0,10);
+                    solvedDates.add(todayKey);
+                    saveSolvedDates();
                     q.correctState = isCorrect ? 'correct' : 'wrong';
-                    renderListsByFilter();
+                    applyFilter(activeFilter, q.id, true);
                 }).catch(()=>{});
             }
         };
@@ -781,7 +807,7 @@
                 const card = cards.find(c => c.dataset.id === q.id);
                 if (card) card.dataset.bookmarked = isActive ? 'true' : 'false';
                 saveBookmarks(bookmarkSet);
-                renderBookmarkList();
+                applyFilter(activeFilter, q.id, true);
             });
         }
 
@@ -831,55 +857,24 @@
             listEl.innerHTML = '';
             if (!items.length) return;
             items.forEach((q, idx) => {
-                const row = document.createElement('div');
-                row.style.display = 'flex';
-                row.style.justifyContent = 'space-between';
-                row.style.alignItems = 'center';
-                row.style.padding = '8px 10px';
-                row.style.border = '1px solid #e5e7eb';
-                row.style.borderRadius = '10px';
-                row.style.cursor = 'pointer';
-                row.style.background = color || '#fff';
-                row.innerHTML = `
-                    <div style="font-weight:700; color:#0f172a;">문제 ${q.number || idx + 1}</div>
-                    <div style="color:#6b7280; font-size:12px;">${q.date || ''}</div>
-                `;
-                row.addEventListener('click', () => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline';
+                btn.style.padding = '6px 10px';
+                btn.style.borderColor = '#e5e7eb';
+                btn.style.background = color || '#fff';
+                btn.textContent = q.number ? `문제 ${q.number}` : `#${idx + 1}`;
+                btn.addEventListener('click', () => {
                     const idxInFiltered = filteredQuestions.findIndex(item => item.id === q.id);
                     if (idxInFiltered >= 0) {
                         renderQuestion(idxInFiltered);
                     }
                 });
-                listEl.appendChild(row);
+                listEl.appendChild(btn);
             });
             container.style.display = 'block';
         };
 
-        const renderListsByFilter = () => {
-            const bookmarkItems = filteredQuestions.filter(q => q.bookmarked);
-            const correctItems = filteredQuestions.filter(q => q.correctState === 'correct');
-            const wrongItems = filteredQuestions.filter(q => q.correctState === 'wrong');
-
-            if (activeFilter === 'bookmark') {
-                renderList(bookmarkListContainer, bookmarkList, bookmarkItems, '#f8fafc');
-                renderList(correctListContainer, correctList, [], null);
-                renderList(wrongListContainer, wrongList, [], null);
-            } else if (activeFilter === 'correct') {
-                renderList(correctListContainer, correctList, correctItems, '#ecfccb');
-                renderList(bookmarkListContainer, bookmarkList, [], null);
-                renderList(wrongListContainer, wrongList, [], null);
-            } else if (activeFilter === 'wrong') {
-                renderList(wrongListContainer, wrongList, wrongItems, '#fee2e2');
-                renderList(bookmarkListContainer, bookmarkList, [], null);
-                renderList(correctListContainer, correctList, [], null);
-            } else {
-                renderList(bookmarkListContainer, bookmarkList, [], null);
-                renderList(correctListContainer, correctList, [], null);
-                renderList(wrongListContainer, wrongList, [], null);
-            }
-        };
-
-        const applyFilter = (filter, targetId = null) => {
+        const applyFilter = (filter, targetId = null, preserveCurrent = false) => {
             activeFilter = filter;
             filterButtons.forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === filter);
@@ -905,31 +900,57 @@
             if (filterEmpty) {
                 filterEmpty.style.display = filteredQuestions.length ? 'none' : 'block';
             }
+            if (filterLists) {
+                filterLists.style.display = filteredQuestions.length ? 'flex' : 'none';
+            }
+            renderList(correctListContainer, correctList, [], null);
+            renderList(wrongListContainer, wrongList, [], null);
+            renderList(bookmarkListContainer, bookmarkList, [], null);
+            const bookmarkItems = filteredQuestions.filter(q => q.bookmarked);
+            const correctItems = filteredQuestions.filter(q => q.correctState === 'correct');
+            const wrongItems = filteredQuestions.filter(q => q.correctState === 'wrong');
+            if (filter === 'bookmark') {
+                renderList(bookmarkListContainer, bookmarkList, bookmarkItems, '#f8fafc');
+            } else if (filter === 'correct') {
+                renderList(correctListContainer, correctList, correctItems, '#ecfccb');
+            } else if (filter === 'wrong') {
+                renderList(wrongListContainer, wrongList, wrongItems, '#fee2e2');
+            }
             if (filteredQuestions.length > 0) {
                 const nextIndex = targetId
                     ? Math.max(0, filteredQuestions.findIndex(q => q.id === targetId))
                     : 0;
-                renderQuestion(nextIndex === -1 ? 0 : nextIndex);
+                if (preserveCurrent && nextIndex >= 0) {
+                    currentIndex = nextIndex;
+                } else {
+                    renderQuestion(nextIndex === -1 ? 0 : nextIndex);
+                }
             } else if (textEl) {
                 textEl.textContent = '';
+                if (resultMsg) resultMsg.textContent = '';
+                [checkBtn, nextBtn, openShareButton, bookmarkButton].forEach(btn => {
+                    if (btn) btn.disabled = true;
+                });
             }
-            renderListsByFilter();
         };
 
         filterButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 applyFilter(btn.dataset.filter || 'all');
-                renderListsByFilter();
             });
         });
 
         applyFilter('all');
-        renderListsByFilter();
 
         // 카드 클릭 시 현재 페이지에서 문제 전환
         cards.forEach(card => {
             card.addEventListener('click', () => {
                 const id = card.dataset.id || '';
+                const link = card.dataset.link;
+                if (link) {
+                    window.location.href = link;
+                    return;
+                }
                 let idx = filteredQuestions.findIndex(q => q.id === id);
                 if (idx === -1) {
                     applyFilter(activeFilter, id);
@@ -940,6 +961,22 @@
                 }
             });
         });
+
+        const folderSelect = document.getElementById('quizFolderSelect');
+        if (folderSelect) {
+            if (!folderSelect.value) {
+                const first = Array.from(folderSelect.options).find(o => o.value);
+                if (first) folderSelect.value = first.value;
+            }
+            folderSelect.addEventListener('change', () => {
+                const val = folderSelect.value;
+                if (val === '') {
+                    window.location.href = '/quiz/list';
+                } else {
+                    folderSelect.form?.submit();
+                }
+            });
+        }
     });
 </script>
 </body>

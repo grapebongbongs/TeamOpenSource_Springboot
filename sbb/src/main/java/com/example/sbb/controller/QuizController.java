@@ -5,6 +5,7 @@ import com.example.sbb.domain.quiz.QuizQuestion;
 import com.example.sbb.domain.user.SiteUser;
 import com.example.sbb.domain.user.UserService;
 import com.example.sbb.service.FriendService;
+import com.example.sbb.service.DiscussionService;
 import com.example.sbb.repository.QuizQuestionRepository;
 import com.example.sbb.repository.FolderRepository;
 import com.example.sbb.service.GroupService;
@@ -36,10 +37,11 @@ public class QuizController {
     private final FolderRepository folderRepository;
     private final GroupService groupService;
     private final FriendService friendService;
+    private final DiscussionService discussionService;
 
     // 전체 퀴즈 목록(간단히)
   @GetMapping("/list")
-public String list(Model model,
+  public String list(Model model,
                    Principal principal,
                    @RequestParam(value = "page", defaultValue = "0") int page,
                    @RequestParam(value = "folderId", required = false) Long folderId) {
@@ -48,9 +50,20 @@ public String list(Model model,
     // TODO: JPA 로직 전부 잠시 주석 처리
     
     SiteUser user = userService.getUser(principal.getName());
+    List<Folder> folders = folderRepository.findByUserOrderByCreatedAtAsc(user)
+            .stream()
+            .filter(f -> {
+                String n = f.getName();
+                return n != null && !n.equals("맞은 문제") && !n.equals("틀린 문제");
+            })
+            .toList();
+
     Folder folder = null;
     if (folderId != null) {
         folder = folderRepository.findByIdAndUser(folderId, user).orElse(null);
+    }
+    if (folder == null && !folders.isEmpty()) {
+        folder = folders.get(0);
     }
 
     int pageIndex = Math.max(page, 0);
@@ -67,7 +80,7 @@ public String list(Model model,
     model.addAttribute("hasPrevious", pageData.hasPrevious());
     model.addAttribute("hasNext", pageData.hasNext());
     model.addAttribute("totalElements", pageData.getTotalElements());
-    model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
+    model.addAttribute("folders", folders);
     model.addAttribute("selectedFolder", folder);
     model.addAttribute("friends", friendService.myFriends(user));
     if (!pageData.isEmpty() && pageData.getContent().get(0).isMultipleChoice()) {
@@ -109,6 +122,8 @@ public String list(Model model,
     @GetMapping("/solve/{id}")
     public String showQuiz(@PathVariable Long id,
                            @RequestParam(value = "folderId", required = false) Long folderId,
+                           @RequestParam(value = "groupId", required = false) Long groupId,
+                           @RequestParam(value = "discussionQuestionId", required = false) Long discussionQuestionId,
                            Principal principal,
                            Model model,
                            RedirectAttributes rttr) {
@@ -136,7 +151,42 @@ public String list(Model model,
         model.addAttribute("folders", folderRepository.findByUserOrderByCreatedAtAsc(user));
         model.addAttribute("choiceList", extractChoices(q.getChoices()));
         model.addAttribute("questionList", loadQuestionList(user, folder));
+        model.addAttribute("discussionGroupId", groupId);
+        model.addAttribute("discussionQuestionId", discussionQuestionId);
         return "quiz_solve";
+    }
+
+    @GetMapping("/discussion/{id}")
+    public String discussion(@PathVariable Long id,
+                             Principal principal,
+                             Model model,
+                             RedirectAttributes rttr) {
+        if (principal == null) return "redirect:/login";
+        SiteUser user = userService.getUser(principal.getName());
+        QuizQuestion q = quizQuestionRepository.findById(id).orElse(null);
+        if (q == null || !q.getUser().getId().equals(user.getId())) {
+            rttr.addFlashAttribute("error", "문제를 찾을 수 없습니다.");
+            return "redirect:/quiz/list";
+        }
+        model.addAttribute("question", q);
+        model.addAttribute("comments", discussionService.list(q));
+        return "quiz_discussion";
+    }
+
+    @PostMapping("/discussion/{id}")
+    public String addDiscussion(@PathVariable Long id,
+                                @RequestParam("content") String content,
+                                Principal principal,
+                                RedirectAttributes rttr) {
+        if (principal == null) return "redirect:/login";
+        SiteUser user = userService.getUser(principal.getName());
+        QuizQuestion q = quizQuestionRepository.findById(id).orElse(null);
+        if (q == null || !q.getUser().getId().equals(user.getId())) {
+            rttr.addFlashAttribute("error", "문제를 찾을 수 없습니다.");
+            return "redirect:/quiz/list";
+        }
+        discussionService.addComment(q, user, content);
+        return "redirect:/quiz/discussion/" + id;
     }
 
     // 답 제출
@@ -175,6 +225,7 @@ public String list(Model model,
         q.setSolved(true);
         q.setCorrect(isCorrect);
         quizQuestionRepository.save(q);
+        userService.recordSolve(user, isCorrect);
 
         model.addAttribute("question", q);
         model.addAttribute("userAnswer", userAnswer);
@@ -234,6 +285,7 @@ public String list(Model model,
                 });
         q.setFolder(targetFolder);
         quizQuestionRepository.save(q);
+        userService.recordSolve(user, isCorrect);
 
         return ResponseEntity.ok(
                 java.util.Map.of(

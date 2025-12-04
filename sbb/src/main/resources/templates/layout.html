@@ -8,6 +8,7 @@
   <title>Intuitive - PDF 기반 문제 생성 서비스</title>
   <meta name="_csrf" th:content="${_csrf.token}"/>
   <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+  <meta name="author" th:content="${#authentication != null ? #authentication.name : ''}"/>
 
   <!-- 공통 스타일 -->
   <link rel="stylesheet" th:href="@{/css/style.css}">

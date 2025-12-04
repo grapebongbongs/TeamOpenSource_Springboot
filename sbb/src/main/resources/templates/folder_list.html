@@ -32,7 +32,8 @@
                 <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">
                     클릭해서 PDF와 문제 보기
                 </p>
-                <form th:action="@{/folders/delete}" method="post" style="margin-top:8px; display:flex; justify-content:flex-end; gap:6px;"
+                <form th:if="${folder.name != '맞은 문제' and folder.name != '틀린 문제'}"
+                      th:action="@{/folders/delete}" method="post" style="margin-top:8px; display:flex; justify-content:flex-end; gap:6px;"
                       onsubmit="return confirm('폴더 안의 PDF와 문제를 모두 삭제할까요?');">
                     <input type="hidden" name="folderId" th:value="${folder.id}">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

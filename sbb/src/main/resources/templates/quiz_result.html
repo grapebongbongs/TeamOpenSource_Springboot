@@ -104,7 +104,7 @@
         <a th:href="${selectedFolder != null} ? @{/quiz/list(folderId=${selectedFolder.id})} : '/quiz/list'"
            class="btn btn-outline">문제 목록 보기</a>
         <a th:if="${nextQuestionId != null}"
-           th:href="@{'/quiz/solve/' + ${nextQuestionId} + (selectedFolder != null ? '?folderId=' + ${selectedFolder.id} : '')}"
+           th:href="${selectedFolder != null} ? @{/quiz/solve/{id}(id=${nextQuestionId}, folderId=${selectedFolder.id})} : @{/quiz/solve/{id}(id=${nextQuestionId})}"
            class="btn">
             다음 문제 풀기 →
         </a>
@@ -168,6 +168,18 @@
             });
         });
     });
+</script>
+<script>
+    // 풀이 날짜 기록 (로컬)
+    (function(){
+        try{
+            const raw = localStorage.getItem('solveDates') || '[]';
+            const set = new Set(JSON.parse(raw));
+            const todayKey = new Date().toISOString().slice(0,10);
+            set.add(todayKey);
+            localStorage.setItem('solveDates', JSON.stringify(Array.from(set)));
+        }catch(e){}
+    })();
 </script>
 </body>
 </html>

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +35,17 @@ public class FriendService {
 
     public List<Friend> myFriends(SiteUser user) {
         return friendRepository.findByFrom(user);
+    }
+
+    public List<SiteUser> resolveFriendTargets(SiteUser me, List<Long> friendIds) {
+        if (me == null || friendIds == null || friendIds.isEmpty()) return List.of();
+        return friendIds.stream()
+                .map(friendRepository::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(f -> f.getFrom() != null && f.getFrom().getId().equals(me.getId()))
+                .map(Friend::getTo)
+                .collect(Collectors.toList());
     }
 
     public List<FriendRequest> pendingInbox(SiteUser user) {

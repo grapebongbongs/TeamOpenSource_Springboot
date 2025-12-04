@@ -10,4 +10,5 @@ import java.util.List;
 public interface PendingNotificationRepository extends JpaRepository<PendingNotification, Long> {
     List<PendingNotification> findByUserAndDeliveredFalseAndDueAtBefore(SiteUser user, LocalDateTime now);
     boolean existsByUser_IdAndQuestion_IdAndDueAt(Long userId, Long questionId, LocalDateTime dueAt);
+    void deleteAllByQuestion_IdIn(List<Long> questionIds);
 }

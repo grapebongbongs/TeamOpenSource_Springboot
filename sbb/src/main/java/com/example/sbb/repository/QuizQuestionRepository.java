@@ -22,6 +22,8 @@ public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long
     // 틀린 문제
     List<QuizQuestion> findByUserAndSolvedTrueAndCorrectFalseOrderByCreatedAtAsc(SiteUser user);
 
+    List<QuizQuestion> findByUserAndSolvedTrueOrderByCreatedAtAsc(SiteUser user);
+
     Page<QuizQuestion> findByUserOrderByCreatedAtAsc(SiteUser user, Pageable pageable);
     Page<QuizQuestion> findByUserAndFolderOrderByCreatedAtAsc(SiteUser user, Folder folder, Pageable pageable);
     List<QuizQuestion> findByUserOrderByCreatedAtAsc(SiteUser user);

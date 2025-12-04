@@ -11,6 +11,14 @@ async function subscribePush(){
   console.log('Subscribed:', sub);
 }
 
+async function scheduleNotificationsNow(){
+  try{
+    await fetch('/api/notifications/schedule-now', { credentials:'same-origin' });
+  }catch(e){
+    // ignore errors silently
+  }
+}
+
 // 알림 벨 UI 상태
 const notificationCenter = {
   items: [],
@@ -112,13 +120,20 @@ function setupFriendDropdown(){
       const res = await fetch('/api/friends/inbox', { credentials:'same-origin' });
       if(!res.ok) return;
       const data = await res.json();
+      const groupRes = await fetch('/api/groups/invite/inbox', { credentials:'same-origin' });
+      let groupData = { received:[], sent:[] };
+      if(groupRes.ok){
+        groupData = await groupRes.json();
+      }
       const recv = data.received || [];
       const sent = data.sent || [];
       const accepted = data.accepted || [];
       const shareReceived = data.shareReceived || [];
       const shareSent = data.shareSent || [];
       const shareAccepted = data.shareAccepted || [];
-      if(!recv.length && !sent.length && !accepted.length){
+      const groupReceived = groupData.received || [];
+      const groupSent = groupData.sent || [];
+      if(!recv.length && !sent.length && !accepted.length && !groupReceived.length && !groupSent.length){
         listEl.innerHTML = '<div class="notification-empty">대기 중인 요청이 없습니다.</div>';
         const fb = notificationCenter.friendBadge;
         if(fb) fb.style.display = 'none';
@@ -126,7 +141,7 @@ function setupFriendDropdown(){
       }
       const fb = notificationCenter.friendBadge;
       if(fb){
-        const total = recv.length + accepted.length + shareReceived.length + shareAccepted.length;
+        const total = recv.length + accepted.length + shareReceived.length + shareAccepted.length + groupReceived.length;
         if(total > 0){
           fb.style.display = 'inline-flex';
           fb.textContent = Math.min(total,99);
@@ -226,6 +241,40 @@ function setupFriendDropdown(){
           listEl.appendChild(row);
         });
       }
+      if(groupReceived.length){
+        const header = document.createElement('div');
+        header.className = 'notification-header';
+        header.textContent = '그룹 초대';
+        listEl.appendChild(header);
+        groupReceived.forEach(item=>{
+          const row = document.createElement('div');
+          row.className = 'notification-item';
+          row.innerHTML = `
+            <div class="notification-title">${item.from} 님이 ${item.groupName} 그룹에 초대했습니다.</div>
+            <div class="notification-body">코드: ${item.code} · ${new Date(item.createdAt).toLocaleString()}</div>
+            <div style="margin-top:6px; display:flex; gap:6px;">
+              <button class="btn btn-outline" data-role="group-accept" data-id="${item.id}" style="padding:4px 8px;">수락</button>
+              <button class="btn btn-outline" data-role="group-reject" data-id="${item.id}" style="padding:4px 8px;">거절</button>
+            </div>
+          `;
+          listEl.appendChild(row);
+        });
+      }
+      if(groupSent.length){
+        const header = document.createElement('div');
+        header.className = 'notification-header';
+        header.textContent = '보낸 그룹 초대(대기)';
+        listEl.appendChild(header);
+        groupSent.forEach(item=>{
+          const row = document.createElement('div');
+          row.className = 'notification-item';
+          row.innerHTML = `
+            <div class="notification-title">${item.to} 님에게 ${item.groupName} 초대</div>
+            <div class="notification-body">${new Date(item.createdAt).toLocaleString()}</div>
+          `;
+          listEl.appendChild(row);
+        });
+      }
       listEl.querySelectorAll('[data-role="accept"]').forEach(btn=>{
         btn.addEventListener('click', async (e)=>{
           e.stopPropagation();
@@ -267,6 +316,22 @@ function setupFriendDropdown(){
             method:'POST',
             headers:{ [csrfHeader]: csrf }
           });
+          renderRequests();
+        });
+      });
+      listEl.querySelectorAll('[data-role="group-accept"]').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          await fetch(`/api/groups/invite/${id}/accept`, { method:'POST', headers:{ [csrfHeader]: csrf } });
+          renderRequests();
+        });
+      });
+      listEl.querySelectorAll('[data-role="group-reject"]').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          await fetch(`/api/groups/invite/${id}/reject`, { method:'POST', headers:{ [csrfHeader]: csrf } });
           renderRequests();
         });
       });
@@ -364,7 +429,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if('Notification' in window){
     // 한 번만 요청
     if(Notification.permission === 'default'){
-      Notification.requestPermission();
+      Notification.requestPermission().then(perm=>{
+        if(perm === 'granted') scheduleNotificationsNow();
+      });
+    } else if(Notification.permission === 'granted'){
+      scheduleNotificationsNow();
     }
     setInterval(pollNotifications, 60_000);
     pollNotifications();

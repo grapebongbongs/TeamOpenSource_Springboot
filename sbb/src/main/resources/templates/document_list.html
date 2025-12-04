@@ -87,14 +87,13 @@
     </div>
 
     <!-- 목록 테이블 카드 -->
-    <div class="card">
-        <table class="table">
+    <div class="card" style="overflow-x:auto;">
+        <table class="table" style="min-width:720px; white-space:nowrap;">
             <thead>
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>원본 파일명</th>
-                <th>저장 파일명</th>
-                <th>파일 크기 (byte)</th>
+                <th>파일 크기 (MB)</th>
                 <th>업로드 시각</th>
                 <th>본문 보기</th>
                 <th style="width:110px; text-align:center;">액션</th>
@@ -106,12 +105,11 @@
                     업로드된 PDF가 없습니다. 먼저 파일을 업로드해 주세요.
                 </td>
             </tr>
-            <tr th:each="file : ${files}">
-                <td th:text="${file.id}"></td>
+            <tr th:each="file, stat : ${files}">
+                <td th:text="${stat.index + 1}"></td>
                 <td th:text="${file.originalFilename}"></td>
-                <td th:text="${file.storedFilename}"></td>
-                <td th:text="${file.fileSize}"></td>
-                <td th:text="${file.uploadedAt}"></td>
+                <td th:text="${#numbers.formatDecimal(file.fileSize / 1048576.0, 1, 1)} + ' MB'"></td>
+                <td th:text="${#temporals.format(file.uploadedAt, 'yy-MM-dd HH:mm')}"></td>
                 <td>
                     <button type="button"
                             class="btn btn-outline"

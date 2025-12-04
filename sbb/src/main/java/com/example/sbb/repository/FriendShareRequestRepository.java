@@ -11,4 +11,5 @@ public interface FriendShareRequestRepository extends JpaRepository<FriendShareR
     List<FriendShareRequest> findByToUserAndStatus(SiteUser toUser, FriendShareRequest.Status status);
     List<FriendShareRequest> findByFromUserAndStatus(SiteUser fromUser, FriendShareRequest.Status status);
     Optional<FriendShareRequest> findByIdAndToUser(Long id, SiteUser toUser);
+    void deleteAllByQuestion_IdIn(List<Long> questionIds);
 }

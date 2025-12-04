@@ -10,6 +10,8 @@ import com.example.sbb.repository.DocumentFileRepository;
 import com.example.sbb.repository.QuizQuestionRepository;
 import com.example.sbb.repository.ProblemRepository;
 import com.example.sbb.repository.GroupSharedQuestionRepository;
+import com.example.sbb.repository.PendingNotificationRepository;
+import com.example.sbb.repository.FriendShareRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,6 +38,8 @@ public class FolderController {
     private final QuizQuestionRepository quizQuestionRepository;
     private final ProblemRepository problemRepository;
     private final GroupSharedQuestionRepository sharedQuestionRepository;
+    private final PendingNotificationRepository pendingNotificationRepository;
+    private final FriendShareRequestRepository friendShareRequestRepository;
 
     @GetMapping
     public String list(Model model, Principal principal) {
@@ -78,6 +82,7 @@ public class FolderController {
             return list(model, principal);
         }
 
+        // 폴더 안에 데이터가 있어도 바로 삭제: 연관 데이터도 함께 제거
         List<DocumentFile> docs = documentFileRepository.findByFolder(folder);
         for (DocumentFile doc : docs) {
             try {
@@ -91,6 +96,8 @@ public class FolderController {
         List<QuizQuestion> folderQuestions = quizQuestionRepository.findByFolder(folder);
         if (!folderQuestions.isEmpty()) {
             List<Long> questionIds = folderQuestions.stream().map(QuizQuestion::getId).toList();
+            pendingNotificationRepository.deleteAllByQuestion_IdIn(questionIds);
+            friendShareRequestRepository.deleteAllByQuestion_IdIn(questionIds);
             sharedQuestionRepository.deleteAllByQuestion_IdIn(questionIds);
             quizQuestionRepository.deleteAll(folderQuestions);
         }

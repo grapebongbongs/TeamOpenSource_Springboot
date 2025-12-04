@@ -11,6 +11,8 @@ import com.example.sbb.repository.FolderRepository;
 import com.example.sbb.repository.GroupSharedQuestionRepository;
 import com.example.sbb.repository.ProblemRepository;
 import com.example.sbb.repository.QuizQuestionRepository;
+import com.example.sbb.repository.PendingNotificationRepository;
+import com.example.sbb.repository.FriendShareRequestRepository;
 import com.example.sbb.service.GeminiQuestionService;
 import com.example.sbb.service.QuizService;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,8 @@ public class UploadController {
     private final FolderRepository folderRepository;
     private final ProblemRepository problemRepository;
     private final GroupSharedQuestionRepository sharedQuestionRepository;
+    private final PendingNotificationRepository pendingNotificationRepository;
+    private final FriendShareRequestRepository friendShareRequestRepository;
 
     // ===========================
     // 업로드 폼
@@ -354,6 +358,8 @@ public class UploadController {
             List<QuizQuestion> docQuestions = quizQuestionRepository.findByDocument(file);
             if (docQuestions != null && !docQuestions.isEmpty()) {
                 List<Long> qIds = docQuestions.stream().map(QuizQuestion::getId).toList();
+                pendingNotificationRepository.deleteAllByQuestion_IdIn(qIds);
+                friendShareRequestRepository.deleteAllByQuestion_IdIn(qIds);
                 sharedQuestionRepository.deleteAllByQuestion_IdIn(qIds);
                 quizQuestionRepository.deleteAll(docQuestions);
             }

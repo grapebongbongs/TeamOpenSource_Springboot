@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko"
+      th:replace="layout :: layout(~{::body})">
+<body>
+<style>
+    .stat-hero { background: linear-gradient(135deg,#0f172a,#3b4b8f,#60a5fa); color:#fff; border-radius:20px; padding:20px; box-shadow:0 16px 32px rgba(0,0,0,0.18); }
+    .stat-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:14px 0; }
+    .stat-card { background:#fff; border-radius:14px; border:1px solid #e5e7eb; padding:14px; box-shadow:0 8px 22px rgba(0,0,0,0.05); }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-bottom:1px solid #e5e7eb; padding:8px 6px; text-align:left; }
+    .badge-list { display:flex; gap:8px; flex-wrap:wrap; }
+    .badge-chip { border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px; background:#f8fafc; }
+</style>
+<div>
+    <div class="stat-hero">
+        <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div>
+                <div style="font-size:18px; font-weight:800;">내 통계</div>
+                <div style="color:#e2e8f0; font-size:13px;">과목별 정확도, 약점, 뱃지와 레벨을 한눈에 확인하세요.</div>
+            </div>
+            <div class="pill-soft" style="background:rgba(255,255,255,0.14); color:#fff;">레벨 <span th:text="${level}">1</span> · <span th:text="${tier}">Rookie</span></div>
+        </div>
+    </div>
+
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div style="font-weight:700;">총 풀이</div>
+            <div style="font-size:22px; font-weight:800;" th:text="${stats.totalSolved()}">0</div>
+            <div style="color:#6b7280; font-size:12px;">정답: <span th:text="${stats.totalCorrect()}">0</span></div>
+        </div>
+        <div class="stat-card">
+            <div style="font-weight:700;">오늘 푼 문제</div>
+            <div style="font-size:22px; font-weight:800;" th:text="${stats.todaySolved()}">0</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-weight:700;">연속 풀이</div>
+            <div style="font-size:22px; font-weight:800;" th:text="${stats.currentStreak()}">0</div>
+            <div style="color:#6b7280; font-size:12px;">최대 연속 정답: <span th:text="${stats.maxCorrectStreak()}">0</span></div>
+        </div>
+    <div class="stat-card">
+        <div style="font-weight:700;">활성 뱃지</div>
+        <div style="font-size:22px; font-weight:800;" th:text="${activeBadgeName != null ? activeBadgeName : '자라나는 새싹'}">자라나는 새싹</div>
+    </div>
+        <div class="stat-card">
+            <div style="font-weight:700;">경험치</div>
+            <div style="font-size:22px; font-weight:800;" th:text="|${xpGraph[0]} XP|">0 XP</div>
+            <div style="color:#6b7280; font-size:12px;">다음 레벨까지: <span th:text="|${xpGraph[1]}%|">0%</span></div>
+            <div style="margin-top:6px; height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden;">
+                <div th:style="|width:${xpGraph[1]}%; background:#60a5fa; height:100%;|" style="width:0%; height:100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:700;">과목별 정확도</div>
+            <div style="font-size:12px; color:#6b7280;" th:text="${weakness != null ? '약점: ' + weakness.folderName() : '데이터 수집 중'}">약점</div>
+        </div>
+        <table>
+            <thead><tr><th>과목</th><th>풀이</th><th>정답</th><th>정확도</th></tr></thead>
+            <tbody>
+            <tr th:each="f : ${stats.folderStats()}">
+                <td th:text="${f.folderName}">folder</td>
+                <td th:text="${f.solved}">0</td>
+                <td th:text="${f.correct}">0</td>
+                <td th:text="${f.accuracy + '%'}">0%</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(stats.folderStats())}">
+                <td colspan="4" style="color:#6b7280;">아직 데이터가 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+        <div class="stat-card">
+            <div style="font-weight:700; margin-bottom:6px;">보유 뱃지</div>
+            <div class="badge-list">
+            <div th:each="b : ${badges}"
+                 th:if="${b.unlocked()}"
+                 class="badge-chip"
+                 th:styleappend="${b.equipped()} ? 'background:#eef2ff;' : ''">
+                <div style="font-weight:700;" th:text="${b.name()}">이름</div>
+                <div style="font-size:12px; color:#6b7280;">해금됨</div>
+            </div>
+            </div>
+        </div>
+</div>
+</body>
+</html>

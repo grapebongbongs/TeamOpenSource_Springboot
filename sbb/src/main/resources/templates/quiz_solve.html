@@ -117,6 +117,12 @@
            class="btn btn-outline">문제 목록 보기</a>
         <a th:href="${selectedFolder != null} ? @{/quiz/next(folderId=${selectedFolder.id})} : '/quiz/next'"
            class="btn btn-outline">안 푼 문제로 이동</a>
+        <a th:if="${discussionGroupId != null and discussionQuestionId != null}"
+           th:href="@{/groups/{gid}/discussion/{qid}(gid=${discussionGroupId},qid=${discussionQuestionId})}"
+           class="btn btn-outline">토론</a>
+        <a th:if="${discussionGroupId == null or discussionQuestionId == null}"
+           th:href="@{/quiz/discussion/{id}(id=${question.id})}"
+           class="btn btn-outline">토론</a>
     </div>
 
     <button type="button"

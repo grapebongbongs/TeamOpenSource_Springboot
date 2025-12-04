@@ -58,6 +58,9 @@ public class QuizQuestion {
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<GroupSharedQuestion> sharedQuestions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<QuestionDiscussion> discussions = new ArrayList<>();
+
     // ===== getter / setter =====
     public Long getId() {
         return id;

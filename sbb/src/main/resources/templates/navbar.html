@@ -8,6 +8,8 @@
       <li><a href="/folders">My Folders</a></li>
       <li><a href="/quiz/list">My Questions</a></li>
       <li><a href="/groups">Study Groups</a></li>
+      <li><a href="/shop">Shop</a></li>
+      <li><a href="/stats">Stats</a></li>
       
     </ul>
 
@@ -33,7 +35,7 @@
           <form id="friendAddForm" style="padding:10px; display:flex; gap:8px; align-items:center;">
             <input type="hidden" id="friendCsrfParam" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <input type="hidden" id="friendCsrfHeader" th:value="${_csrf.headerName}">
-            <input type="text" name="username" placeholder="아이디 검색" style="flex:1; padding:8px 10px; border:1px solid #d1d5db; border-radius:8px;">
+            <input type="text" name="username" placeholder="아이디 검색" style="flex:1; padding:8px 10px; border:1px solid #111111; border-radius:8px;">
             <button type="submit" class="btn btn-outline" style="padding:6px 10px;">추가</button>
           </form>
           <div id="friendRequestList" class="notification-list"></div>
@@ -41,11 +43,13 @@
       </div>
       <div class="profile-wrapper" th:if="${#authorization.expression('isAuthenticated()')}">
         <button type="button" class="icon-button" id="profileButton">
-          <span class="profile-icon" aria-hidden="true">👤</span>
+          <span class="profile-icon" aria-hidden="true"
+                th:text="${@userService.getUser(#authentication.name)?.avatar != null ? @userService.getUser(#authentication.name).avatar : '👤'}">👤</span>
         </button>
         <div class="profile-panel" id="profilePanel">
           <div class="profile-header">
-            <div class="avatar">🧑</div>
+            <div class="avatar"
+                 th:text="${@userService.getUser(#authentication.name)?.avatar != null ? @userService.getUser(#authentication.name).avatar : '🧑'}">🧑</div>
             <div>
               <div class="profile-name" th:text="${#authentication.name}">사용자</div>
               <div class="profile-sub">내 계정</div>
@@ -55,7 +59,7 @@
             <a href="/quiz/list" class="profile-item">내 문제 보기</a>
             <a href="/groups" class="profile-item">내 그룹 보기</a>
             <a href="/folders" class="profile-item">내 폴더</a>
-            <a href="/profile" class="profile-item">친구/프로필</a>
+            <a href="/profile" class="profile-item">프로필</a>
             <a href="/logout" class="profile-item">로그아웃</a>
           </div>
         </div>

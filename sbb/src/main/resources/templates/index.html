@@ -7,59 +7,168 @@
 <body>
 <div th:fragment="content">
 
+    <style>
+        .hero {
+            position:relative;
+            overflow:hidden;
+            border-radius:24px;
+            background:linear-gradient(135deg,#0f172a,#3b4b8f,#60a5fa);
+            color:#fff;
+            padding:28px;
+            min-height:180px;
+            box-shadow:0 16px 38px rgba(0,0,0,0.25);
+        }
+        .hero::after {
+            content:'';
+            position:absolute;
+            inset:-40px 10% auto auto;
+            width:200px;
+            height:200px;
+            background:radial-gradient(circle at center, rgba(255,255,255,0.18), transparent 60%);
+            filter:blur(12px);
+            animation:float 7s ease-in-out infinite;
+        }
+        .hero h1 { margin:0 0 8px; font-size:24px; }
+        .hero-sub { color:#e2e8f0; font-size:14px; margin:0 0 16px; }
+        .cta-row { display:flex; gap:10px; flex-wrap:wrap; }
+        .btn-strong {
+            background:#facc15;
+            color:#1f2937;
+            font-weight:800;
+            border:none;
+            padding:12px 16px;
+            border-radius:12px;
+            box-shadow:0 10px 24px rgba(250,204,21,0.3);
+            transition:transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-strong:hover { transform:translateY(-1px); box-shadow:0 14px 32px rgba(250,204,21,0.35); }
+        .stat-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+            gap:12px;
+            margin-top:14px;
+        }
+        .stat-card {
+            background:#fff;
+            border-radius:14px;
+            padding:14px;
+            box-shadow:0 10px 24px rgba(0,0,0,0.06);
+            display:flex;
+            gap:10px;
+            align-items:center;
+            border:1px solid #e5e7eb;
+        }
+        .stat-icon { font-size:20px; width:36px; height:36px; display:grid; place-items:center; border-radius:12px; }
+        .ranking-card { display:flex; align-items:center; gap:12px; margin:8px 0; padding:10px; border-radius:12px; border:1px solid #e5e7eb; background:#fff; }
+        .rank-medal { width:42px; text-align:center; font-weight:700; font-size:16px; }
+        @keyframes float { 0%,100% { transform:translateY(0);} 50% { transform:translateY(-6px);} }
+    </style>
+
     <div class="container">
 
-        <!-- 메인 히어로 카드 -->
-        <div class="card" style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
-
-            <!-- 왼쪽: 소개 텍스트 -->
-            <div style="flex:1 1 260px;">
-                <h1 class="page-title" style="margin-bottom:10px;">Intuitive</h1>
-                <p style="margin:0 0 10px; font-size:14px; color:#6b7280;">
-                    PDF를 업로드하면, 내용을 기반으로 자동으로 학습용 문제를 만들어주는 서비스입니다.
-                </p>
-                <p style="margin:0; font-size:13px; color:#9ca3af;">
-                    강의자료, 교재, 논문 등을 올려두고 매일 문제를 풀면서 복습해 보세요.
-                </p>
-            </div>
-
-            <!-- 오른쪽: 빠른 시작 카드 -->
-            <div style="flex:0 0 260px; border-left:1px solid var(--border-soft); padding-left:18px;">
-                <h2 style="font-size:14px; margin:0 0 10px; color:#4b5563;">빠른 시작</h2>
-
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a th:href="@{/folders}" class="btn">
-                        📂 내 폴더 보기
-                    </a>
-                    <a th:href="@{/document/list}" class="btn btn-outline">
-                        📄 전체 업로드 보기
-                    </a>
-                    <a th:href="@{/quiz/list}" class="btn btn-outline">
-                        📝 My Questions 바로가기
-                    </a>
+        <div class="hero">
+            <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end;">
+                <div style="flex:1 1 280px;">
+                    <h1>PDF로 문제를 만들고, 매일 성장하세요.</h1>
+                    <p class="hero-sub">업로드 → 생성 → 풀이까지 한 번에. 오늘 얼마나 풀었는지 바로 확인하고 달려보세요.</p>
+                    <div class="cta-row">
+                        <a th:href="@{/quiz/list}" class="btn-strong">📝 My Questions</a>
+                        <a th:href="@{/folders}" class="btn btn-outline" style="background:#fff; color:#0f172a; width:44px; text-align:center;">📂</a>
+                        <a th:href="@{/document/upload}" class="btn btn-outline" style="background:#fff; color:#0f172a; width:44px; text-align:center;">⬆️</a>
+                    </div>
+                </div>
+                <div class="card" style="flex:0 0 240px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff;">
+                    <div style="font-weight:700; margin-bottom:6px;">오늘의 진행</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div>오늘 푼 문제: <span id="todaySolved" th:text="${todaySolvedCount != null ? todaySolvedCount : 0}">0</span>개</div>
+                        <div>연속 풀이: <span th:text="${sessionUser != null ? sessionUser.streak : 0}">0</span>일</div>
+                        <div>보유 포인트: <span th:text="${sessionUser != null ? sessionUser.points : 0}">0</span>P</div>
+                    </div>
                 </div>
             </div>
-
         </div>
 
-        <div class="card" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px;">
-            <div class="pill-soft">포인트: <span th:text="${sessionUser != null ? sessionUser.points : 0}">0</span></div>
-            <div class="pill-soft">연속 풀이: <span th:text="${sessionUser != null ? sessionUser.streak : 0}">0</span>일</div>
-            <a class="btn btn-outline" href="/profile">내 페이지 보기</a>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#eef2ff;">💎</div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">포인트</div>
+                    <div style="font-weight:800;" th:text="${sessionUser != null ? sessionUser.points : 0}">0</div>
+                    <a class="btn btn-outline" href="/shop" style="margin-top:6px; padding:6px 10px;">상점으로</a>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#ecfccb;">🔥</div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">연속 풀이</div>
+                    <div style="font-weight:800;" th:text="${sessionUser != null ? sessionUser.streak : 0}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#e0f2fe;">📌</div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">오늘 푼 문제</div>
+                    <div style="font-weight:800;" id="statTodaySolved" th:text="${todaySolvedCount != null ? todaySolvedCount : 0}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fef3c7;">👤</div>
+                <div>
+                    <div style="font-size:12px; color:#6b7280;">내 페이지</div>
+                    <a class="btn btn-outline" href="/profile" style="padding:6px 10px;">바로 가기</a>
+                </div>
+            </div>
         </div>
 
-        <!-- 간단한 설명 카드 -->
-        <div class="card" style="margin-top:14px; font-size:13px; color:#6b7280;">
-            <strong style="display:block; margin-bottom:6px;">사용 방법</strong>
-            <ol style="margin:0 0 4px 18px; padding:0;">
-                <li>PDF를 업로드합니다.</li>
-                <li>업로드된 PDF 목록에서 원하는 문서를 선택합니다. (추후 확장 예정)</li>
-                <li>해당 문서를 기반으로 자동 생성된 문제를 풀며 학습합니다.</li>
-            </ol>
+        <div class="card" style="margin-top:16px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <h3 style="margin:0; font-size:16px;">주간 랭킹 (Top 5)</h3>
+                <span style="color:#6b7280; font-size:12px;">친구들과 쌓은 포인트 기준</span>
+            </div>
+            <div th:if="${weeklyRanking == null}" style="color:#6b7280; font-size:13px;">로그인하면 친구들과 랭킹을 볼 수 있어요.</div>
+            <div th:if="${weeklyRanking != null}">
+                <div th:each="r : ${weeklyRanking}" class="ranking-card">
+                    <div class="rank-medal"
+                         th:styleappend="${r.rank() == 1} ? 'color:#d97706;' : (${r.rank()==2} ? 'color:#6b7280;' : (${r.rank()==3} ? 'color:#b45309;' : 'color:#475569;'))"
+                         th:text="${r.rank()}">1</div>
+                    <div style="display:flex; align-items:center; gap:6px; min-width:88px;">
+                        <span th:if="${r.medal() != ''}" th:text="${r.medal()}"
+                              style="display:inline-block; width:28px; text-align:center; font-size:18px;"
+                              th:styleappend="${r.rank() == 1} ? 'color:#d97706;' : (${r.rank()==2} ? 'color:#6b7280;' : 'color:#b45309;')">🥇</span>
+                        <span style="font-size:22px; display:inline-block; width:28px; text-align:center;"
+                              th:text="${r.user().avatar != null ? r.user().avatar : '🧑'}">🧑</span>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;" th:text="${r.user().username}">user</div>
+                        <div style="color:#6b7280; font-size:12px;">포인트
+                            <span th:text="${r.user().points}">0</span> · 연속
+                            <span th:text="${r.user().streak}">0</span>일
+                        </div>
+                    </div>
+                    <div class="pill-soft" style="min-width:90px; text-align:center; background:#eef2ff;"
+                         th:text="|${r.user().points} P|">0 P</div>
+                </div>
+            </div>
         </div>
-
+ 
     </div>
-
+ 
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const hero = document.querySelector('.hero, .stat-hero');
+        if (hero) {
+            hero.style.transition = 'transform 0.25s ease';
+            hero.addEventListener('mousemove', (e)=>{
+                const r = hero.getBoundingClientRect();
+                const dx = (e.clientX - r.left - r.width/2) / r.width;
+                const dy = (e.clientY - r.top - r.height/2) / r.height;
+                hero.style.transform = `translateY(${dy * 4}px) scale(1.003)`;
+            });
+            hero.addEventListener('mouseleave', ()=> hero.style.transform = 'translateY(0) scale(1)');
+        }
+    });
+</script>
 </body>
 </html>

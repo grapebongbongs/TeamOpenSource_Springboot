@@ -10,4 +10,5 @@ public interface GroupSharedQuestionRepository extends JpaRepository<GroupShared
     List<GroupSharedQuestion> findByGroupOrderBySharedAtDesc(StudyGroup group);
     boolean existsByGroup_IdAndQuestion_Id(Long groupId, Long questionId);
     void deleteAllByQuestion_IdIn(List<Long> questionIds);
+    void deleteAllByGroup(StudyGroup group);
 }
