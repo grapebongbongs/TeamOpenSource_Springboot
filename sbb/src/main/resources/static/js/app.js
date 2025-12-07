@@ -1,4 +1,4 @@
-async function registerSW(){ if(!('serviceWorker'in navigator)) return null; return navigator.serviceWorker.register('/sw.js'); }
+async function registerSW(){ if(!('serviceWorker'in navigator)) return null; return navigator.serviceWorker.register('/js/sw.js'); }
 function b64ToU8(b64){const p='='.repeat((4-b64.length%4)%4);const a=(b64+p).replace(/-/g,'+').replace(/_/g,'/');const r=atob(a),u=new Uint8Array(r.length);for(let i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return u;}
 async function subscribePush(){
   if(!('Notification'in window)) { alert('브라우저가 알림을 지원하지 않습니다.'); return; }
