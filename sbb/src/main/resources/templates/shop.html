@@ -20,6 +20,8 @@
         gap:12px;
     }
     .shop-card { padding:14px; border:1px solid #e5e7eb; border-radius:14px; background:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.04); }
+    .item-list label { transition:border-color .18s, box-shadow .18s, transform .18s; }
+    .item-list label.active { border:2px solid #e11d48; box-shadow:0 0 0 3px rgba(225,29,72,0.22); transform:translateY(-2px); }
     .item-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; max-width:360px; }
     .badge-tile { padding:10px; border-radius:12px; border:1px solid #e5e7eb; background:#f8fafc; display:flex; flex-direction:column; gap:6px; }
     .locked { opacity:0.5; }
@@ -57,7 +59,9 @@
                            class="btn btn-outline"
                            th:classappend="${ownedAvatars.contains(opt.value())} ? ' owned' : ''"
                            style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:12px; font-size:18px; cursor:pointer;">
-                        <input type="radio" name="avatar" th:id="|avatar_${iter.index}|" th:value="${opt.value()}" style="position:absolute; opacity:0; pointer-events:none;">
+                        <input type="radio" name="avatar" th:id="|avatar_${iter.index}|" th:value="${opt.value()}"
+                               th:checked="${(user.avatar != null ? user.avatar : '🧑') == opt.value()}"
+                               style="position:absolute; opacity:0; pointer-events:none;">
                         <div th:text="${opt.value()}"></div>
                         <div style="font-size:12px;">
                             <span th:text="${opt.label()}">이름</span> ·
@@ -82,7 +86,9 @@
                            class="btn btn-outline"
                            th:classappend="${ownedBanners.contains(opt.value())} ? ' owned' : ''"
                            th:style="|padding:12px; color:#fff; background:${opt.gradient()}; display:flex; flex-direction:column; align-items:flex-start; gap:4px; cursor:pointer;|">
-                        <input type="radio" name="banner" th:id="|banner_${iter.index}|" th:value="${opt.value()}" style="position:absolute; opacity:0; pointer-events:none;">
+                        <input type="radio" name="banner" th:id="|banner_${iter.index}|" th:value="${opt.value()}"
+                               th:checked="${(user.banner != null ? user.banner : 'sunrise') == opt.value()}"
+                               style="position:absolute; opacity:0; pointer-events:none;">
                         <div style="font-weight:700;" th:text="${opt.label()}">배너</div>
                         <div style="font-size:12px; color:#f8fafc;"
                              th:text="${ownedBanners.contains(opt.value()) ? '보유' : opt.cost() + 'P'}">가격</div>
@@ -157,8 +163,8 @@
             const radios = Array.from(form.querySelectorAll('input[type="radio"]'));
             if (radios.length && !radios.some(r=>r.checked)) {
                 radios[0].checked = true;
-                radios[0].parentElement.classList.add('active');
             }
+            radios.forEach(r=>r.parentElement.classList.toggle('active', r.checked));
             radios.forEach(r=>{
                 const parent = r.parentElement;
                 parent.addEventListener('click', (e)=>{

@@ -81,6 +81,13 @@ function addNotificationsToCenter(items = []){
   if(changed) renderNotificationCenter();
 }
 
+function closePanelById(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('open');
+  el.style.display = 'none';
+}
+
 function setupNotificationBell(){
   notificationCenter.bell = document.getElementById('notificationBell');
   notificationCenter.panel = document.getElementById('notificationPanel');
@@ -91,6 +98,8 @@ function setupNotificationBell(){
 
   notificationCenter.bell.addEventListener('click', (e)=>{
     e.preventDefault();
+    closePanelById('friendPanel');
+    closePanelById('profilePanel');
     const isOpen = notificationCenter.panel.classList.toggle('open');
     notificationCenter.panel.style.display = isOpen ? 'block' : 'none';
   });
@@ -378,6 +387,8 @@ function setupFriendDropdown(){
 
   btn.addEventListener('click', (e)=>{
     e.preventDefault();
+    closePanelById('notificationPanel');
+    closePanelById('profilePanel');
     const open = panel.classList.toggle('open');
     panel.style.display = open ? 'block' : 'none';
     if(open) renderRequests();
@@ -396,6 +407,8 @@ function setupProfileDropdown(){
   if(!btn || !panel) return;
   btn.addEventListener('click', (e)=>{
     e.preventDefault();
+    closePanelById('notificationPanel');
+    closePanelById('friendPanel');
     const open = panel.classList.toggle('open');
     panel.style.display = open ? 'block' : 'none';
   });
