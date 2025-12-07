@@ -77,7 +77,10 @@ public class UserService {
      * username 중복 체크용 (회원가입 시 사용 가능)
      */
     public boolean existsByUsername(String username) {
-        return userRepository.findByUsername(username).isPresent();
+        if (username == null) return false;
+        if (userRepository.findByUsername(username).isPresent()) return true;
+        // DB/로그인 로직이 대소문자를 구분하지 않는 경우를 대비해 소문자/대문자 중복도 확인
+        return userRepository.findByUsernameIgnoreCase(username).isPresent();
     }
 
     /**

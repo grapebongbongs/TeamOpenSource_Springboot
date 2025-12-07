@@ -16,6 +16,10 @@
                 Intuitive 계정을 생성하고, PDF 기반 문제 생성 서비스를 이용해 보세요.
             </p>
 
+            <div th:if="${error}" style="margin-bottom:10px;">
+                <p style="color:#e74c3c; font-size:13px; text-align:center;" th:text="${error}">이미 존재하는 아이디입니다.</p>
+            </div>
+
             <form method="post" th:action="@{/signup}" style="display:flex; flex-direction:column; gap:12px;">
 
                 <div>

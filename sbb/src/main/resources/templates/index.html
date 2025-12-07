@@ -81,7 +81,7 @@
                     <div style="font-weight:700; margin-bottom:6px;">오늘의 진행</div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <div>오늘 푼 문제: <span id="todaySolved" th:text="${todaySolvedCount != null ? todaySolvedCount : 0}">0</span>개</div>
-                        <div>연속 풀이: <span th:text="${sessionUser != null ? sessionUser.streak : 0}">0</span>일</div>
+                        <div>연속 일일풀이: <span th:text="${sessionUser != null ? sessionUser.streak : 0}">0</span>일</div>
                         <div>보유 포인트: <span th:text="${sessionUser != null ? sessionUser.points : 0}">0</span>P</div>
                     </div>
                 </div>
@@ -130,11 +130,9 @@
                 <div th:each="r : ${weeklyRanking}" class="ranking-card">
                     <div class="rank-medal"
                          th:styleappend="${r.rank() == 1} ? 'color:#d97706;' : (${r.rank()==2} ? 'color:#6b7280;' : (${r.rank()==3} ? 'color:#b45309;' : 'color:#475569;'))"
-                         th:text="${r.rank()}">1</div>
+                         th:text="${r.rank() == 1 ? '🥇' : (r.rank()==2 ? '🥈' : (r.rank()==3 ? '🥉' : r.rank()))}">1</div>
                     <div style="display:flex; align-items:center; gap:6px; min-width:88px;">
-                        <span th:if="${r.medal() != ''}" th:text="${r.medal()}"
-                              style="display:inline-block; width:28px; text-align:center; font-size:18px;"
-                              th:styleappend="${r.rank() == 1} ? 'color:#d97706;' : (${r.rank()==2} ? 'color:#6b7280;' : 'color:#b45309;')">🥇</span>
+                        <span aria-hidden="true" style="display:inline-block; width:28px;"></span>
                         <span style="font-size:22px; display:inline-block; width:28px; text-align:center;"
                               th:text="${r.user().avatar != null ? r.user().avatar : '🧑'}">🧑</span>
                     </div>

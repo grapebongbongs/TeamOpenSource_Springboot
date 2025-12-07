@@ -265,12 +265,22 @@ a:hover {
 }
 .profile-item {
   padding: 10px 14px;
-  color: #0f172a;
+  color: #000000;
   font-weight: 800;
 }
+.profile-list .profile-item,
+.user-status .profile-list .profile-item {
+  color: #000000 !important;
+}
 .profile-item:hover {
-  background: #eef2ff;
+  background: var(--brand);
+  color: #ffffff;
   text-decoration: none;
+}
+.profile-list .profile-item:hover,
+.user-status .profile-list .profile-item:hover {
+  background: var(--brand);
+  color: #ffffff !important;
 }
 
 
@@ -406,6 +416,7 @@ main.container {
    ========================================================= */
 input[type="text"],
 input[type="password"],
+input[type="email"],
 input[type="file"],
 textarea,
 select {

@@ -24,6 +24,10 @@ public class UserController {
                                @RequestParam String password,
                                @RequestParam String email,
                                Model model) {
+        if (userService.existsByUsername(username)) {
+            model.addAttribute("error", "이미 존재하는 아이디입니다.");
+            return "user/signup_form";
+        }
         userService.createUser(username, password, email);
         model.addAttribute("msg", "회원가입 완료!");
         return "redirect:/login";
