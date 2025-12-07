@@ -132,7 +132,6 @@
                          th:styleappend="${r.rank() == 1} ? 'color:#d97706;' : (${r.rank()==2} ? 'color:#6b7280;' : (${r.rank()==3} ? 'color:#b45309;' : 'color:#475569;'))"
                          th:text="${r.rank() == 1 ? '🥇' : (r.rank()==2 ? '🥈' : (r.rank()==3 ? '🥉' : r.rank()))}">1</div>
                     <div style="display:flex; align-items:center; gap:6px; min-width:88px;">
-                        <span aria-hidden="true" style="display:inline-block; width:28px;"></span>
                         <span style="font-size:22px; display:inline-block; width:28px; text-align:center;"
                               th:text="${r.user().avatar != null ? r.user().avatar : '🧑'}">🧑</span>
                     </div>
