@@ -524,7 +524,7 @@
             const result = [];
             let match;
             while ((match = regex.exec(cleaned)) !== null) {
-                const number = match[1]?.trim() || null;
+                const number = match[1] ? match[1].trim() : null;
                 const text = (match[2] || '').trim();
                 if (text) {
                     result.push({ number, text, value: number || text });
@@ -611,8 +611,10 @@
         const correctList = document.getElementById('correctList');
         const wrongListContainer = document.getElementById('wrongListContainer');
         const wrongList = document.getElementById('wrongList');
-        const csrfToken = document.querySelector('meta[name=\"_csrf\"]')?.content || '';
-        const csrfHeader = document.querySelector('meta[name=\"_csrf_header\"]')?.content || 'X-CSRF-TOKEN';
+        const csrfMeta = document.querySelector('meta[name=\"_csrf\"]');
+        const csrfHeaderMeta = document.querySelector('meta[name=\"_csrf_header\"]');
+        const csrfToken = csrfMeta ? csrfMeta.content : '';
+        const csrfHeader = csrfHeaderMeta ? csrfHeaderMeta.content : 'X-CSRF-TOKEN';
         const shareModal = document.getElementById('shareModal');
         const openShareButton = document.getElementById('openShareButton');
         const closeShareButton = document.getElementById('closeShareButton');
@@ -816,40 +818,46 @@
             if (!shareModal) return;
             shareModal.style.display = show ? 'flex' : 'none';
         };
-        openShareButton?.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleShareModal(true);
-        });
-        closeShareButton?.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleShareModal(false);
-        });
-        sendShareButton?.addEventListener('click', async () => {
-            if (!shareFriendList) return;
-            const checked = Array.from(shareFriendList.querySelectorAll('input[name="shareFriendIds"]:checked'));
-            if (!checked.length) {
-                alert('친구를 선택해 주세요.');
-                return;
-            }
-            const q = filteredQuestions[currentIndex];
-            if (!q || !q.id) {
-                alert('문제를 선택해 주세요.');
-                return;
-            }
-            const params = new URLSearchParams();
-            checked.forEach(c => params.append('friendIds', c.value));
-            params.append('questionId', q.id);
-            await fetch('/api/friends/share/bulk', {
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/x-www-form-urlencoded',
-                    [csrfHeader]: csrfToken
-                },
-                body: params.toString()
+        if (openShareButton) {
+            openShareButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleShareModal(true);
             });
-            alert('함께 풀기 요청을 보냈습니다.');
-            toggleShareModal(false);
-        });
+        }
+        if (closeShareButton) {
+            closeShareButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleShareModal(false);
+            });
+        }
+        if (sendShareButton) {
+            sendShareButton.addEventListener('click', async () => {
+                if (!shareFriendList) return;
+                const checked = Array.from(shareFriendList.querySelectorAll('input[name="shareFriendIds"]:checked'));
+                if (!checked.length) {
+                    alert('친구를 선택해 주세요.');
+                    return;
+                }
+                const q = filteredQuestions[currentIndex];
+                if (!q || !q.id) {
+                    alert('문제를 선택해 주세요.');
+                    return;
+                }
+                const params = new URLSearchParams();
+                checked.forEach(c => params.append('friendIds', c.value));
+                params.append('questionId', q.id);
+                await fetch('/api/friends/share/bulk', {
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/x-www-form-urlencoded',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: params.toString()
+                });
+                alert('함께 풀기 요청을 보냈습니다.');
+                toggleShareModal(false);
+            });
+        }
 
         const renderList = (container, listEl, items, color) => {
             if (!container || !listEl) return;
@@ -973,7 +981,9 @@
                 if (val === '') {
                     window.location.href = '/quiz/list';
                 } else {
-                    folderSelect.form?.submit();
+                    if (folderSelect.form) {
+                        folderSelect.form.submit();
+                    }
                 }
             });
         }
