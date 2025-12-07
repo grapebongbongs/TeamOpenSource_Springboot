@@ -17,7 +17,7 @@ public class StatsController {
     private final UserService userService;
     private final ProgressService progressService;
 
-    @GetMapping("/stats")
+    @GetMapping({"/stats", "/stats/"})
     public String stats(Model model, Principal principal) {
         if (principal == null) return "redirect:/login";
         SiteUser user = userService.getUser(principal.getName());
